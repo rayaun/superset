@@ -36,17 +36,17 @@ jobs:
         run: |
           # Files that should never be committed
           SENSITIVE_PATTERNS=(
-            '.env'
-            '.env.local'
-            '.env.production'
-            'credentials.json'
-            'service-account*.json'
-            '*.pem'
-            '*.key'
+            '\.env'
+            '\.env\.local'
+            '\.env\.production'
+            'credentials\.json'
+            'service-account.*\.json'
+            '.*\.pem'
+            '.*\.key'
             'id_rsa'
             'id_ed25519'
-            '.npmrc'
-            '.pypirc'
+            '\.npmrc'
+            '\.pypirc'
           )
 
           ADDED_FILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD || true)
