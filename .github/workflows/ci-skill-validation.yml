@@ -1,0 +1,90 @@
+name: Skill Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.agents/skills/**'
+      - '.claude/skills/**'
+      - '.cursor/skills/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-skills:
+    name: Validate SKILL.md Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find and validate SKILL.md files
+        run: |
+          EXIT_CODE=0
+
+          # Find all SKILL.md files in recognized skill directories
+          SKILL_FILES=$(find .agents/skills .claude/skills .cursor/skills -name "SKILL.md" 2>/dev/null || true)
+
+          if [ -z "$SKILL_FILES" ]; then
+            echo "No SKILL.md files found — skipping validation."
+            exit 0
+          fi
+
+          echo "Found SKILL.md files:"
+          echo "$SKILL_FILES"
+          echo ""
+
+          while IFS= read -r file; do
+            echo "--- Validating: $file ---"
+
+            # Check file is not empty
+            if [ ! -s "$file" ]; then
+              echo "::error file=$file::SKILL.md is empty"
+              EXIT_CODE=1
+              continue
+            fi
+
+            # Check for YAML frontmatter
+            FIRST_LINE=$(head -1 "$file")
+            if [ "$FIRST_LINE" != "---" ]; then
+              echo "::error file=$file::SKILL.md must start with YAML frontmatter (---)"
+              EXIT_CODE=1
+              continue
+            fi
+
+            # Extract frontmatter and check for required fields
+            FRONTMATTER=$(sed -n '/^---$/,/^---$/p' "$file" | head -n -1 | tail -n +2)
+
+            if [ -z "$FRONTMATTER" ]; then
+              echo "::error file=$file::SKILL.md has empty or malformed YAML frontmatter"
+              EXIT_CODE=1
+              continue
+            fi
+
+            # Check for 'name' field
+            if ! echo "$FRONTMATTER" | grep -qE '^name:\s*.+'; then
+              echo "::error file=$file::SKILL.md frontmatter missing required 'name' field"
+              EXIT_CODE=1
+            fi
+
+            # Check for 'description' field
+            if ! echo "$FRONTMATTER" | grep -qE '^description:\s*.+'; then
+              echo "::error file=$file::SKILL.md frontmatter missing required 'description' field"
+              EXIT_CODE=1
+            fi
+
+            # Check that there is content after frontmatter
+            BODY=$(sed '1,/^---$/!d' "$file" | wc -l)
+            TOTAL=$(wc -l < "$file")
+            if [ "$TOTAL" -le "$BODY" ]; then
+              echo "::warning file=$file::SKILL.md has no body content after frontmatter"
+            fi
+
+            echo "  OK"
+          done <<< "$SKILL_FILES"
+
+          exit $EXIT_CODE
