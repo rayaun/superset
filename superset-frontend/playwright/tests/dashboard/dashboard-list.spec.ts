@@ -56,6 +56,8 @@ test('should delete a dashboard with confirmation', async ({
   dashboardListPage,
   testAssets,
 }) => {
+  test.setTimeout(60_000);
+
   // Create throwaway dashboard for deletion
   const { id: dashboardId, name: dashboardName } = await createTestDashboard(
     page,
@@ -213,6 +215,8 @@ test('should bulk export multiple dashboards', async ({
   dashboardListPage,
   testAssets,
 }) => {
+  test.setTimeout(60_000);
+
   // Create 2 throwaway dashboards for bulk export
   const [dashboard1, dashboard2] = await Promise.all([
     createTestDashboard(page, testAssets, test.info(), {

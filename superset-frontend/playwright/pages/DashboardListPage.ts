@@ -52,7 +52,20 @@ export class DashboardListPage {
    * (ListviewsDefaultCardView feature flag may enable card view).
    */
   async goto(): Promise<void> {
-    await this.page.goto(`${URL.DASHBOARD_LIST}?viewMode=table`);
+    const url = `${URL.DASHBOARD_LIST}?viewMode=table`;
+    try {
+      await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes('ERR_EMPTY_RESPONSE')
+      ) {
+        await this.page.waitForTimeout(2000);
+        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**

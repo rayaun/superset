@@ -52,7 +52,20 @@ export class AuthPage {
   async goto(): Promise<void> {
     // Use domcontentloaded — the login form is server-rendered and ready before
     // all assets load. The default 'load' event may never fire with HMR WebSocket.
-    await this.page.goto(URL.LOGIN, { waitUntil: 'domcontentloaded' });
+    // Retry once on ERR_EMPTY_RESPONSE (Flask dev server may drop connections under load)
+    try {
+      await this.page.goto(URL.LOGIN, { waitUntil: 'domcontentloaded' });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes('ERR_EMPTY_RESPONSE')
+      ) {
+        await this.page.waitForTimeout(2000);
+        await this.page.goto(URL.LOGIN, { waitUntil: 'domcontentloaded' });
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**

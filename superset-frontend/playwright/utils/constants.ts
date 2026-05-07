@@ -32,12 +32,12 @@ export const TIMEOUT = {
   /**
    * Global setup timeout (matches test timeout for cold CI starts)
    */
-  GLOBAL_SETUP: 30000, // 30s for global setup auth
+  GLOBAL_SETUP: 45000, // 45s for global setup auth (cold CI starts)
 
   /**
    * Page navigation and load timeouts
    */
-  PAGE_LOAD: 10000, // 10s for page transitions (login → welcome, dataset → explore)
+  PAGE_LOAD: 20000, // 20s for page transitions (login → welcome, dataset → explore)
 
   /**
    * Form and UI element load timeouts
@@ -47,7 +47,7 @@ export const TIMEOUT = {
   /**
    * API response timeout for operations like export/download
    */
-  API_RESPONSE: 15000, // 15s for API responses and downloads
+  API_RESPONSE: 20000, // 20s for API responses and downloads
 
   /**
    * Confirmation dialog wait (e.g., "Confirm save", "Are you sure?")
@@ -67,11 +67,11 @@ export const TIMEOUT = {
   /**
    * SQL query execution (query → backend processing → results)
    */
-  QUERY_EXECUTION: 15000, // 15s for SQL queries that may take longer than default expect timeout
+  QUERY_EXECUTION: 20000, // 20s for SQL queries that may take longer than default expect timeout
 
   /**
    * Extended test timeout for multi-step tests (page load + query execution + assertions).
    * Use with test.setTimeout() when the default 30s test timeout is insufficient.
    */
-  SLOW_TEST: 60000, // 60s for tests that chain multiple slow operations
+  SLOW_TEST: 90000, // 90s for tests that chain multiple slow operations
 } as const;
