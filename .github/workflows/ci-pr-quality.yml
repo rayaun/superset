@@ -1,0 +1,103 @@
+name: PR Quality Gate
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-title-lint:
+    name: PR Title — Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            fix
+            feat
+            docs
+            style
+            refactor
+            perf
+            test
+            chore
+            ci
+            build
+            other
+          requireScope: false
+          subjectPattern: ^.+$
+          subjectPatternError: "PR title must have a description after the type prefix."
+
+  pr-description-check:
+    name: PR Description — Required Sections
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body has required sections
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const required = ['### SUMMARY', '### TESTING INSTRUCTIONS'];
+            const missing = required.filter(s => !body.includes(s));
+
+            if (missing.length > 0) {
+              const msg = `PR description is missing required sections:\n${missing.map(s => `- \`${s}\``).join('\n')}\n\nPlease use the PR template.`;
+              core.setFailed(msg);
+            }
+
+  changed-files-check:
+    name: Changed Files — Safety Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for secrets in diff
+        run: |
+          # Check for common secret patterns in added lines
+          PATTERNS=(
+            'PRIVATE.KEY'
+            'BEGIN RSA PRIVATE KEY'
+            'BEGIN DSA PRIVATE KEY'
+            'BEGIN EC PRIVATE KEY'
+            'BEGIN OPENSSH PRIVATE KEY'
+            'password\s*=\s*["\x27][^"\x27]{8,}'
+            'api[_-]?key\s*=\s*["\x27][A-Za-z0-9]{20,}'
+            'secret[_-]?key\s*=\s*["\x27][A-Za-z0-9]{20,}'
+            'aws_access_key_id\s*=\s*AK'
+            'aws_secret_access_key\s*='
+          )
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            if git diff origin/${{ github.base_ref }}...HEAD -- ':!*.yml' ':!*.yaml' ':!*.md' | grep -iP "^\+.*${pattern}" 2>/dev/null; then
+              echo "::warning::Potential secret detected matching pattern: ${pattern}"
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 1 ]; then
+            echo "::warning::Review the warnings above. If these are false positives, you may proceed."
+          fi
+      - name: Check for large files
+        run: |
+          # Fail if any single added file exceeds 5MB
+          LARGE_FILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD | while read f; do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f" 2>/dev/null || echo 0)
+              if [ "$SIZE" -gt 5242880 ]; then
+                echo "$f ($(numfmt --to=iec $SIZE))"
+              fi
+            fi
+          done)
+          if [ -n "$LARGE_FILES" ]; then
+            echo "::error::Files exceeding 5MB limit:"
+            echo "$LARGE_FILES"
+            exit 1
+          fi

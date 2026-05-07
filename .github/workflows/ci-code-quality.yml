@@ -1,0 +1,97 @@
+name: Code Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  basic-checks:
+    name: Basic Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check trailing whitespace
+        run: |
+          FILES=$(git diff --name-only --diff-filter=ACM origin/${{ github.base_ref }}...HEAD -- \
+            ':!*.png' ':!*.jpg' ':!*.gif' ':!*.ico' ':!*.woff' ':!*.woff2' ':!*.ttf' ':!*.eot' \
+            ':!*.parquet' ':!*.geojson' ':!*.snap' ':!*.svg' || true)
+          FAIL=0
+          for f in $FILES; do
+            if [ -f "$f" ] && grep -Pn '\s+$' "$f" >/dev/null 2>&1; then
+              echo "::warning file=$f::Trailing whitespace detected"
+              grep -Pn '\s+$' "$f" | head -5
+              FAIL=1
+            fi
+          done
+          if [ "$FAIL" -eq 1 ]; then
+            echo "::warning::Trailing whitespace found in some files. Consider running pre-commit locally."
+          fi
+
+      - name: Check end-of-file newlines
+        run: |
+          FILES=$(git diff --name-only --diff-filter=ACM origin/${{ github.base_ref }}...HEAD -- \
+            ':!*.png' ':!*.jpg' ':!*.gif' ':!*.ico' ':!*.woff' ':!*.woff2' ':!*.ttf' ':!*.eot' \
+            ':!*.parquet' ':!*.geojson' ':!*.snap' ':!*.svg' || true)
+          FAIL=0
+          for f in $FILES; do
+            if [ -f "$f" ] && [ -s "$f" ]; then
+              LAST_CHAR=$(tail -c 1 "$f" | xxd -p)
+              if [ "$LAST_CHAR" != "0a" ] && [ "$LAST_CHAR" != "" ]; then
+                echo "::warning file=$f::Missing newline at end of file"
+                FAIL=1
+              fi
+            fi
+          done
+          if [ "$FAIL" -eq 1 ]; then
+            echo "::warning::Some files are missing final newlines."
+          fi
+
+      - name: Validate YAML files
+        run: |
+          FILES=$(git diff --name-only --diff-filter=ACM origin/${{ github.base_ref }}...HEAD -- '*.yml' '*.yaml' || true)
+          FAIL=0
+          for f in $FILES; do
+            if [ -f "$f" ]; then
+              python3 -c "
+          import yaml, sys
+          try:
+              with open('$f') as fh:
+                  yaml.safe_load(fh)
+          except Exception as e:
+              print(f'::error file=$f::Invalid YAML: {e}')
+              sys.exit(1)
+          " || FAIL=1
+            fi
+          done
+          exit $FAIL
+
+  merge-conflict-check:
+    name: Merge Conflict Markers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for conflict markers
+        run: |
+          FILES=$(git diff --name-only --diff-filter=ACM origin/${{ github.base_ref }}...HEAD || true)
+          FAIL=0
+          for f in $FILES; do
+            if [ -f "$f" ] && grep -nE '^(<{7}|={7}|>{7})' "$f" >/dev/null 2>&1; then
+              echo "::error file=$f::Merge conflict markers found"
+              grep -nE '^(<{7}|={7}|>{7})' "$f"
+              FAIL=1
+            fi
+          done
+          exit $FAIL

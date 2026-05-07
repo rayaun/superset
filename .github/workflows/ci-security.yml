@@ -1,0 +1,88 @@
+name: Security Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        continue-on-error: true
+        with:
+          fail-on-severity: critical
+
+  sensitive-files:
+    name: Sensitive File Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for sensitive files
+        run: |
+          # Files that should never be committed
+          SENSITIVE_PATTERNS=(
+            '\.env'
+            '\.env\.local'
+            '\.env\.production'
+            'credentials\.json'
+            'service-account.*\.json'
+            '.*\.pem'
+            '.*\.key'
+            'id_rsa'
+            'id_ed25519'
+            '\.npmrc'
+            '\.pypirc'
+          )
+
+          ADDED_FILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD || true)
+          FAIL=0
+
+          for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+            MATCHES=$(echo "$ADDED_FILES" | grep -E "(^|/)${pattern}$" 2>/dev/null || true)
+            if [ -n "$MATCHES" ]; then
+              echo "::error::Sensitive file detected: $MATCHES"
+              FAIL=1
+            fi
+          done
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo "::error::Sensitive files should not be committed. Add them to .gitignore."
+            exit 1
+          fi
+          echo "No sensitive files detected."
+
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript', 'python']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
