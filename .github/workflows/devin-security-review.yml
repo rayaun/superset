@@ -95,10 +95,9 @@ jobs:
         id: devin
         env:
           DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
-          DEVIN_ORG_ID: ${{ secrets.DEVIN_ORG_ID }}
         run: |
-          if [ -z "$DEVIN_API_KEY" ] || [ -z "$DEVIN_ORG_ID" ]; then
-            echo "::error::Missing DEVIN_API_KEY or DEVIN_ORG_ID secrets. Configure them in Settings > Secrets and variables > Actions."
+          if [ -z "$DEVIN_API_KEY" ]; then
+            echo "::error::Missing DEVIN_API_KEY secret. Configure it in Settings > Secrets and variables > Actions."
             exit 1
           fi
 
@@ -136,7 +135,7 @@ jobs:
             }')
 
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://api.devin.ai/v3/organizations/${DEVIN_ORG_ID}/sessions" \
+            "https://api.devin.ai/v1/sessions" \
             -H "Authorization: Bearer ${DEVIN_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
