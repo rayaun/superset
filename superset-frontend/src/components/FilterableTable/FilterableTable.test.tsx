@@ -119,6 +119,22 @@ describe('FilterableTable', () => {
     expect(getByText('b2')).toBeInTheDocument();
     expect(getByText('b3')).toBeInTheDocument();
   });
+
+  // Regression test for issue #7 (XSS via SQL Lab query results). The default
+  // `allowHTML` value must be `false` so that HTML/JS payloads in cell data are
+  // rendered as escaped text rather than live DOM nodes.
+  test('escapes HTML payloads in cell data by default', () => {
+    const xssPayload = '<img src=x onerror="window.__xss_fired=true">';
+    const xssProps = {
+      orderedColumnKeys: ['payload'],
+      data: [{ payload: xssPayload }],
+      height: 200,
+    };
+    const { container, getByText } = render(<FilterableTable {...xssProps} />);
+    expect(getByText(xssPayload)).toBeInTheDocument();
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('.safe-html-wrapper')).toBeNull();
+  });
 });
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks

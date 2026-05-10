@@ -63,7 +63,11 @@ export const FilterableTable = ({
   height,
   filterText = '',
   expandedColumns = [],
-  allowHTML = true,
+  // Secure by default: cell values from query results are rendered as plain
+  // text and any HTML/JS tokens are escaped by React. Callers must explicitly
+  // opt in to HTML rendering (which still passes through `sanitizeHtml`) only
+  // for trusted, user-controlled contexts.
+  allowHTML = false,
   striped,
 }: FilterableTableProps) => {
   const getCellContent = useCellContentParser({

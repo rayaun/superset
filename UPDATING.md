@@ -24,6 +24,17 @@ assists people when migrating to a new version.
 
 ## Next
 
+### SQL Lab "Render HTML" toggle is now disabled by default
+
+The SQL Lab results table previously rendered cell values as sanitized HTML by
+default. To eliminate XSS risk from query results that may contain HTML or
+JavaScript-like payloads (see issue #7), the `Render HTML` toggle in the SQL
+Lab settings menu now defaults to **off**. Cell values are rendered as plain,
+escaped text unless a user explicitly opts in. The corresponding component
+prop (`FilterableTable`'s `allowHTML`) also defaults to `false`. Existing
+users who have already toggled the setting on will retain their preference,
+which is persisted in `localStorage`.
+
 ### Granular Export Controls
 
 A new feature flag `GRANULAR_EXPORT_CONTROLS` introduces three fine-grained permissions that replace the legacy `can_csv` permission:
