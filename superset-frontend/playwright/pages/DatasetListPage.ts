@@ -54,7 +54,23 @@ export class DatasetListPage {
    * Navigate to the dataset list page
    */
   async goto(): Promise<void> {
-    await this.page.goto(URL.DATASET_LIST);
+    try {
+      await this.page.goto(URL.DATASET_LIST, {
+        waitUntil: 'domcontentloaded',
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes('ERR_EMPTY_RESPONSE')
+      ) {
+        await this.page.waitForTimeout(2000);
+        await this.page.goto(URL.DATASET_LIST, {
+          waitUntil: 'domcontentloaded',
+        });
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**

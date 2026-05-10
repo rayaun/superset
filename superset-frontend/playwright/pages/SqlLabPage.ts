@@ -62,7 +62,20 @@ export class SqlLabPage {
   // ── Navigation ──
 
   async goto(): Promise<void> {
-    await this.page.goto(URL.SQLLAB, { waitUntil: 'domcontentloaded' });
+    // Retry once on ERR_EMPTY_RESPONSE (Flask dev server may drop connections under load)
+    try {
+      await this.page.goto(URL.SQLLAB, { waitUntil: 'domcontentloaded' });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes('ERR_EMPTY_RESPONSE')
+      ) {
+        await this.page.waitForTimeout(2000);
+        await this.page.goto(URL.SQLLAB, { waitUntil: 'domcontentloaded' });
+      } else {
+        throw error;
+      }
+    }
   }
 
   async waitForPageLoad(options?: { timeout?: number }): Promise<void> {

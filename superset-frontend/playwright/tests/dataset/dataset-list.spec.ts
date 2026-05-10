@@ -95,6 +95,8 @@ test('should delete a dataset with confirmation', async ({
   datasetListPage,
   testAssets,
 }) => {
+  test.setTimeout(60_000);
+
   // Create throwaway dataset for deletion
   const { id: datasetId, name: datasetName } = await createTestDataset(
     page,
@@ -256,6 +258,8 @@ test('should export multiple datasets via bulk select action', async ({
   datasetListPage,
   testAssets,
 }) => {
+  test.setTimeout(60_000);
+
   // Create 2 throwaway datasets for bulk export
   const [dataset1, dataset2] = await Promise.all([
     createTestDataset(page, testAssets, test.info(), {

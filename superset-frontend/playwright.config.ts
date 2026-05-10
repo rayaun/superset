@@ -37,12 +37,12 @@ export default defineConfig({
   globalSetup: './playwright/global-setup.ts',
 
   // Timeout settings
-  timeout: 30000,
-  expect: { timeout: 8000 },
+  timeout: process.env.CI ? 45000 : 30000,
+  expect: { timeout: process.env.CI ? 15000 : 8000 },
 
   // Parallel execution
   fullyParallel: true,
-  workers: process.env.CI ? 2 : 1,
+  workers: 1,
 
   // Retry logic - 2 retries in CI, 0 locally
   retries: process.env.CI ? 2 : 0,

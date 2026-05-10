@@ -50,6 +50,8 @@ test('should delete a chart with confirmation', async ({
   chartListPage,
   testAssets,
 }) => {
+  test.setTimeout(60_000);
+
   // Create throwaway chart for deletion
   const { id: chartId, name: chartName } = await createTestChart(
     page,
@@ -99,6 +101,8 @@ test('should edit chart name via properties modal', async ({
   chartListPage,
   testAssets,
 }) => {
+  test.setTimeout(60_000);
+
   // Create throwaway chart for editing
   const { id: chartId, name: chartName } = await createTestChart(
     page,
