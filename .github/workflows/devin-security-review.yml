@@ -1,0 +1,213 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Devin Security Vulnerability Review
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: devin-security-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  trigger-devin-security-review:
+    name: Trigger Devin Security Review
+    runs-on: ubuntu-latest
+    # Trigger when:
+    # 1. The "security-vulnerability" label is applied to any issue, OR
+    # 2. A new issue is opened with "security" in the title
+    if: >
+      (github.event.action == 'labeled' &&
+       github.event.label.name == 'security-vulnerability') ||
+      (github.event.action == 'opened' &&
+       contains(github.event.issue.title, 'security'))
+
+    steps:
+      - name: Validate issue context
+        id: validate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+
+            // Prevent duplicate sessions: check for existing Devin comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+            });
+
+            const alreadyTriggered = comments.data.some(c =>
+              c.body && c.body.includes('Devin Security Review Initiated')
+            );
+
+            if (alreadyTriggered) {
+              core.setOutput('skip', 'true');
+              core.info('Devin security review already triggered for this issue.');
+              return;
+            }
+
+            core.setOutput('skip', 'false');
+            core.setOutput('number', issue.number);
+            core.setOutput('title', issue.title);
+            core.setOutput('url', issue.html_url);
+            core.setOutput('author', issue.user.login);
+            core.setOutput('labels', labels.join(', '));
+
+      - name: Extract issue body
+        if: steps.validate.outputs.skip != 'true'
+        id: body
+        run: |
+          # Use environment variable to safely handle multiline content
+          BODY=$(cat <<'ISSUE_BODY_EOF'
+          ${{ github.event.issue.body }}
+          ISSUE_BODY_EOF
+          )
+          # Truncate to 2000 chars for API safety
+          TRUNCATED=$(echo "$BODY" | head -c 2000)
+          echo "issue_body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$TRUNCATED" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create Devin security review session
+        if: steps.validate.outputs.skip != 'true'
+        id: devin
+        env:
+          DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+          DEVIN_ORG_ID: ${{ secrets.DEVIN_ORG_ID }}
+        run: |
+          if [ -z "$DEVIN_API_KEY" ] || [ -z "$DEVIN_ORG_ID" ]; then
+            echo "::error::Missing DEVIN_API_KEY or DEVIN_ORG_ID secrets. Configure them in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          PROMPT=$(cat <<'PROMPT_EOF'
+          Security vulnerability reported in ${{ github.repository }} via issue #${{ steps.validate.outputs.number }}.
+
+          Issue Title: ${{ steps.validate.outputs.title }}
+          Issue URL: ${{ steps.validate.outputs.url }}
+          Reported by: ${{ steps.validate.outputs.author }}
+          Labels: ${{ steps.validate.outputs.labels }}
+
+          Issue Body:
+          ${{ steps.body.outputs.issue_body }}
+
+          Instructions:
+          1. Read the full issue and understand the reported vulnerability
+          2. Classify the vulnerability type (XSS, SQL injection, SSRF, auth bypass, dependency CVE, etc.)
+          3. Search the codebase for the affected code paths — trace from entry point to impact
+          4. Assess severity (Critical/High/Medium/Low) based on exploitability and blast radius
+          5. Implement a fix with defense-in-depth (input validation, sanitization, access controls)
+          6. Add regression tests that verify the vulnerability is resolved
+          7. Run pre-commit checks and the test suite
+          8. Open a PR that references issue #${{ steps.validate.outputs.number }} with a security advisory section
+          9. Comment on the original issue with findings, severity assessment, and PR link
+          PROMPT_EOF
+          )
+
+          PAYLOAD=$(jq -n \
+            --arg prompt "$PROMPT" \
+            --arg title "Security Review: Issue #${{ steps.validate.outputs.number }}" \
+            '{
+              prompt: $prompt,
+              title: $title,
+              tags: ["security-review", "issue-${{ steps.validate.outputs.number }}"]
+            }')
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.devin.ai/v3/organizations/${DEVIN_ORG_ID}/sessions" \
+            -H "Authorization: Bearer ${DEVIN_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "::error::Devin API returned HTTP $HTTP_CODE: $BODY"
+            exit 1
+          fi
+
+          SESSION_ID=$(echo "$BODY" | jq -r '.session_id // empty')
+          SESSION_URL=$(echo "$BODY" | jq -r '.url // empty')
+
+          if [ -z "$SESSION_ID" ]; then
+            echo "::error::Failed to parse session_id from Devin API response"
+            exit 1
+          fi
+
+          echo "session_id=$SESSION_ID" >> "$GITHUB_OUTPUT"
+          echo "session_url=$SESSION_URL" >> "$GITHUB_OUTPUT"
+          echo "Session created: $SESSION_URL"
+
+      - name: Comment on issue with session link
+        if: steps.validate.outputs.skip != 'true' && steps.devin.outputs.session_url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sessionUrl = '${{ steps.devin.outputs.session_url }}';
+            const sessionId = '${{ steps.devin.outputs.session_id }}';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ steps.validate.outputs.number }},
+              body: [
+                '## Devin Security Review Initiated',
+                '',
+                'A Devin session has been started to investigate this vulnerability report.',
+                '',
+                `| Detail | Value |`,
+                `|--------|-------|`,
+                `| **Session** | [${sessionId}](${sessionUrl}) |`,
+                `| **Status** | Running |`,
+                `| **Triggered by** | \`${{ github.event.action }}\` event |`,
+                '',
+                'Devin will:',
+                '1. Analyze the reported vulnerability and classify its type',
+                '2. Trace affected code paths in the codebase',
+                '3. Assess severity (Critical/High/Medium/Low)',
+                '4. Implement a fix with regression tests',
+                '5. Open a PR referencing this issue',
+                '',
+                '---',
+                '*Automated by [Devin Security Review](.github/workflows/devin-security-review.yml)*',
+              ].join('\n')
+            });
+
+      - name: Add security-review-in-progress label
+        if: steps.validate.outputs.skip != 'true' && steps.devin.outputs.session_url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ steps.validate.outputs.number }},
+                labels: ['security-review-in-progress']
+              });
+            } catch (e) {
+              core.warning(`Could not add label: ${e.message}`);
+            }
