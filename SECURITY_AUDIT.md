@@ -13,6 +13,8 @@
 - **Package:** `vm2` (<=3.11.1)
 - **Advisory:** [GHSA-47x8-96vw-5wg6](https://github.com/advisories/GHSA-47x8-96vw-5wg6)
 - **Observation:** The `superset-frontend` npm dependency tree includes `vm2`, which has a known sandbox escape vulnerability allowing arbitrary code execution on the host. The package is no longer maintained. A fix exists by upgrading past 3.11.1, but the upstream package has been deprecated entirely.
+- **Dependency chain:** `geostyler@18.5.0` → `typescript-json-schema@0.67.1` → `vm2@3.10.5`
+- **Remediation:** Added npm override `"vm2": ">=3.11.2"` in `superset-frontend/package.json` to force resolution to 3.11.2, which is above the vulnerable range.
 
 ---
 
@@ -31,6 +33,8 @@
 - **Package:** `axios` (1.0.0–1.15.1)
 - **Advisories:** [GHSA-w9j2-pvgh-6h63](https://github.com/advisories/GHSA-w9j2-pvgh-6h63), [GHSA-pmwg-cvhr-8vh7](https://github.com/advisories/GHSA-pmwg-cvhr-8vh7)
 - **Observation:** The version of `axios` used in `superset-frontend` falls within the affected range. These advisories cover SSRF and credential leakage vectors in HTTP request handling. A fix is available.
+- **Dependency chain:** `wait-on@9.0.5` / `nx` / `jest-process-manager` → `axios@1.15.0` (all devDependencies)
+- **Remediation:** Added npm override `"axios": ">=1.15.2"` in `superset-frontend/package.json` to force resolution to 1.16.0, which is above the vulnerable range.
 
 ---
 
