@@ -688,7 +688,7 @@ const ResultSet = ({
     if (data && data.length > 0) {
       const allowHTML = getItem(
         LocalStorageKeys.SqllabIsRenderHtmlEnabled,
-        true,
+        false,
       );
 
       const tableProps = {

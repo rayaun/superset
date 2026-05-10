@@ -76,3 +76,50 @@ test('should transform cell data by getCellContent for the regular text', () => 
   );
   expect(container).toHaveTextContent('regular_text:a');
 });
+
+// Regression test for issue #7: query result values must be HTML-escaped by
+// default. With `allowHTML` disabled (the secure default), an HTML/JS payload
+// must be rendered as plain text and never as a live DOM node.
+test('escapes HTML payloads when allowHTML is the default (false)', () => {
+  const xssPayload = '<img src=x onerror=alert(document.cookie)>';
+  const { container } = render(
+    <>
+      {renderResultCell({
+        cellData: xssPayload,
+        columnKey: 'xss',
+      })}
+    </>,
+  );
+  expect(container).toHaveTextContent(xssPayload);
+  expect(container.querySelector('img')).toBeNull();
+  expect(container.querySelector('.safe-html-wrapper')).toBeNull();
+});
+
+test('escapes script tags when allowHTML is the default (false)', () => {
+  const xssPayload = '<script>alert("xss")</script>';
+  const { container } = render(
+    <>
+      {renderResultCell({
+        cellData: xssPayload,
+        columnKey: 'xss',
+      })}
+    </>,
+  );
+  expect(container).toHaveTextContent(xssPayload);
+  expect(container.querySelector('script')).toBeNull();
+  expect(container.querySelector('.safe-html-wrapper')).toBeNull();
+});
+
+test('renders sanitized HTML only when allowHTML is explicitly enabled', () => {
+  const { container } = render(
+    <>
+      {renderResultCell({
+        cellData: '<b>bold</b>',
+        columnKey: 'a',
+        allowHTML: true,
+      })}
+    </>,
+  );
+  expect(container.querySelector('.safe-html-wrapper')).not.toBeNull();
+  expect(container.querySelector('b')).not.toBeNull();
+});
