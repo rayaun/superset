@@ -30,7 +30,7 @@
 
 set -euo pipefail
 
-COMPOSE_FILE="docker-compose-non-dev.yml"
+COMPOSE_FILE="docker-compose-submission.yml"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 cd "$PROJECT_DIR"
@@ -80,13 +80,13 @@ cmd_start() {
     print_header
     check_prerequisites
 
-    echo -e "${GREEN}Building and starting Superset...${NC}"
+    echo -e "${GREEN}Starting Superset...${NC}"
     echo -e "  Compose file: ${COMPOSE_FILE}"
     echo ""
-    echo -e "${YELLOW}This will take 3-5 minutes on first run.${NC}"
+    echo -e "${YELLOW}Wait 2-3 minutes for database initialization on first run.${NC}"
     echo ""
 
-    docker compose -f "$COMPOSE_FILE" up --build -d
+    docker compose -f "$COMPOSE_FILE" up -d
 
     echo ""
     echo -e "${GREEN}Superset is starting up.${NC}"
