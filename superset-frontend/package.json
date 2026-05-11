@@ -413,7 +413,7 @@
     "@luma.gl/shadertools": "~9.2.5",
     "@luma.gl/webgl": "~9.2.5",
     "vm2": ">=3.11.2",
-    "axios": ">=1.15.2"
+    "axios": "^1.16.0"
   },
   "readme": "ERROR: No README data found!",
   "scarfSettings": {

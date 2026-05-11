@@ -53,6 +53,7 @@
 - **Observation:** The version of `axios` used in `superset-frontend` falls within the affected range. These advisories cover SSRF and credential leakage vectors in HTTP request handling. A fix is available.
 - **Dependency chain:** `wait-on@9.0.5` / `nx` / `jest-process-manager` → `axios@1.15.0` (all devDependencies)
 - **Remediation:** Added npm override `"axios": ">=1.15.2"` in `superset-frontend/package.json` to force resolution to 1.16.0, which is above the vulnerable range.
+- **Status:** Resolved (re-verified via issue #11). The override has been tightened to `"axios": "^1.16.0"` to make the patched-major intent explicit, and a Jest guard (`superset-frontend/spec/security/dependencyOverrides.test.ts`) now fails CI if a vulnerable axios version is ever reintroduced into the lockfile. `npm audit` no longer reports GHSA-w9j2-pvgh-6h63 against `superset-frontend`.
 
 ---
 
