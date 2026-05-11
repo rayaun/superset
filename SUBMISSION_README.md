@@ -217,14 +217,15 @@ All PRs follow [Conventional Commits](https://www.conventionalcommits.org/) and 
 | [#3](https://github.com/rayaun/superset/pull/3) | `feat:` add all 51 gstack skills from garrytan/gstack | Tooling | 2026-05-07 |
 | [#2](https://github.com/rayaun/superset/pull/2) | `ci:` add PR quality gate, skill validation, code quality, and security workflows | CI/CD | 2026-05-07 |
 | [#1](https://github.com/rayaun/superset/pull/1) | `feat:` add all 14 superpowers skills from obra/superpowers | Tooling | 2026-05-07 |
+| [#13](https://github.com/rayaun/superset/pull/13) | `fix(security):` tighten axios override and guard against GHSA-w9j2-pvgh-6h63 regressions (#11) | Dependency Security | 2026-05-11 |
+| [#12](https://github.com/rayaun/superset/pull/12) | `fix(security):` bump mako to 1.3.12 (CVE-2026-44307, #10) | Dependency Security | 2026-05-11 |
 
 ### Open PRs (Additional Security Fixes)
 
 | PR | Title | Category |
 |----|-------|----------|
+| [#18](https://github.com/rayaun/superset/pull/18) | `fix(security):` pin dockerize.Dockerfile base image to alpine 3.23.4 + digest (#17) | Supply Chain Security |
 | [#14](https://github.com/rayaun/superset/pull/14) | `docs:` add Devin AI walkthrough presentation for Superset integration | Documentation |
-| [#13](https://github.com/rayaun/superset/pull/13) | `fix(security):` tighten axios override and guard against GHSA-w9j2-pvgh-6h63 regressions | Dependency Security |
-| [#12](https://github.com/rayaun/superset/pull/12) | `fix(security):` bump mako to 1.3.12 (CVE-2026-44307, #10) | Dependency Security |
 
 ---
 
@@ -239,6 +240,7 @@ A comprehensive security audit is documented in [`SECURITY_AUDIT.md`](SECURITY_A
 | 3 | `axios` HTTP request vulnerabilities (GHSA-w9j2-pvgh-6h63) | **High** | Fixed (PR #6, #13) |
 | 4 | `flask` session cache leak (CVE-2026-27205) | **High** | Documented (requires major version upgrade) |
 | 5 | Helm chart pods run as root | **Critical** | Documented (infrastructure change) |
+| 6 | Unpinned base image in `dockerize.Dockerfile` | **High** | Fixed (PR #18) |
 
 ---
 
