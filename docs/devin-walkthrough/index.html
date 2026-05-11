@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devin AI &times; Apache Superset &mdash; Walkthrough</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --devin-dark:    #0a1628;
+      --devin-navy:    #0f2140;
+      --devin-blue:    #2563eb;
+      --devin-light:   #60a5fa;
+      --devin-pale:    #dbeafe;
+      --devin-ice:     #eff6ff;
+      --devin-white:   #ffffff;
+      --devin-accent:  #38bdf8;
+      --devin-green:   #34d399;
+      --devin-amber:   #fbbf24;
+      --devin-red:     #f87171;
+      --text-primary:  #1e293b;
+      --text-muted:    #64748b;
+      --shadow-sm:     0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:     0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:     0 8px 32px rgba(0,0,0,.12);
+      --radius:        12px;
+      --radius-sm:     8px;
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--devin-ice);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Navigation ───────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--devin-pale);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    nav .logo {
+      font-weight: 700; font-size: 1.1rem; color: var(--devin-blue);
+      letter-spacing: -.02em;
+    }
+    nav .logo span { color: var(--text-muted); font-weight: 400; }
+    nav ul { list-style: none; display: flex; gap: .25rem; }
+    nav ul li a {
+      text-decoration: none; color: var(--text-muted);
+      font-size: .82rem; font-weight: 500;
+      padding: .4rem .75rem; border-radius: 6px;
+      transition: all .15s;
+    }
+    nav ul li a:hover, nav ul li a.active {
+      color: var(--devin-blue); background: var(--devin-pale);
+    }
+
+    /* ── Slide Sections ───────────────────────────────── */
+    .slide {
+      min-height: 100vh;
+      padding: 80px 2rem 3rem;
+      display: flex; flex-direction: column; justify-content: center;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .slide-number {
+      display: inline-block;
+      font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+      color: var(--devin-blue); text-transform: uppercase;
+      background: var(--devin-pale); padding: .25rem .7rem;
+      border-radius: 20px; margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800; letter-spacing: -.03em;
+      color: var(--devin-dark); line-height: 1.15;
+      margin-bottom: .75rem;
+    }
+    h1 .highlight { color: var(--devin-blue); }
+    h2 {
+      font-size: 1.6rem; font-weight: 700;
+      color: var(--devin-dark); margin-bottom: .5rem;
+      letter-spacing: -.02em;
+    }
+    h3 {
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--devin-navy); margin-bottom: .4rem;
+    }
+    .subtitle {
+      font-size: 1.1rem; color: var(--text-muted);
+      max-width: 640px; margin-bottom: 2rem;
+    }
+
+    /* ── Cards & Grid ─────────────────────────────────── */
+    .grid { display: grid; gap: 1.25rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+
+    .card {
+      background: var(--devin-white);
+      border: 1px solid var(--devin-pale);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .card .icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; margin-bottom: .75rem;
+    }
+    .icon-blue  { background: var(--devin-pale); color: var(--devin-blue); }
+    .icon-green { background: #d1fae5; color: #059669; }
+    .icon-amber { background: #fef3c7; color: #d97706; }
+    .icon-red   { background: #fee2e2; color: #dc2626; }
+
+    .card p, .card li { font-size: .9rem; color: var(--text-muted); line-height: 1.55; }
+    .card ul { padding-left: 1.1rem; margin-top: .4rem; }
+    .card ul li { margin-bottom: .25rem; }
+
+    /* ── Tags / Badges ────────────────────────────────── */
+    .tag {
+      display: inline-block; font-size: .7rem; font-weight: 600;
+      padding: .2rem .55rem; border-radius: 4px;
+      letter-spacing: .02em; margin-right: .3rem; margin-bottom: .3rem;
+    }
+    .tag-blue   { background: var(--devin-pale); color: var(--devin-blue); }
+    .tag-green  { background: #d1fae5; color: #059669; }
+    .tag-amber  { background: #fef3c7; color: #d97706; }
+    .tag-red    { background: #fee2e2; color: #dc2626; }
+    .tag-navy   { background: #1e293b; color: #e2e8f0; }
+
+    /* ── Flow Diagram ─────────────────────────────────── */
+    .flow {
+      display: flex; align-items: stretch; gap: 0;
+      overflow-x: auto; padding: 1rem 0;
+    }
+    .flow-step {
+      flex: 1; min-width: 160px;
+      background: var(--devin-white); border: 1px solid var(--devin-pale);
+      border-radius: var(--radius-sm); padding: 1rem 1.1rem;
+      position: relative; text-align: center;
+    }
+    .flow-step::after {
+      content: '';
+      position: absolute; right: -18px; top: 50%;
+      transform: translateY(-50%);
+      border: 8px solid transparent;
+      border-left: 10px solid var(--devin-light);
+      z-index: 1;
+    }
+    .flow-step:last-child::after { display: none; }
+    .flow-step .step-num {
+      font-size: .65rem; font-weight: 700;
+      color: var(--devin-blue); text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: .3rem;
+    }
+    .flow-step .step-title {
+      font-size: .85rem; font-weight: 600; color: var(--devin-dark);
+    }
+    .flow-step .step-detail {
+      font-size: .75rem; color: var(--text-muted); margin-top: .25rem;
+    }
+
+    /* ── Code / Pre ───────────────────────────────────── */
+    .code-block {
+      background: var(--devin-dark); color: #e2e8f0;
+      border-radius: var(--radius-sm); padding: 1.2rem 1.5rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: .8rem; line-height: 1.7;
+      overflow-x: auto; margin: 1rem 0;
+    }
+    .code-block .comment { color: #64748b; }
+    .code-block .keyword { color: var(--devin-accent); }
+    .code-block .string  { color: var(--devin-green); }
+    .code-block .url     { color: var(--devin-light); text-decoration: underline; }
+
+    /* ── Callout ──────────────────────────────────────── */
+    .callout {
+      background: var(--devin-pale); border-left: 4px solid var(--devin-blue);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 1rem 1.25rem; margin: 1rem 0;
+    }
+    .callout p { font-size: .88rem; color: var(--devin-navy); }
+    .callout strong { color: var(--devin-blue); }
+
+    /* ── Table ────────────────────────────────────────── */
+    .clean-table {
+      width: 100%; border-collapse: collapse; margin: .75rem 0;
+      font-size: .85rem;
+    }
+    .clean-table th {
+      text-align: left; font-weight: 600; color: var(--devin-navy);
+      border-bottom: 2px solid var(--devin-pale); padding: .6rem .75rem;
+      font-size: .78rem; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .clean-table td {
+      padding: .55rem .75rem; border-bottom: 1px solid #f1f5f9;
+      color: var(--text-muted);
+    }
+    .clean-table tr:hover td { background: var(--devin-ice); }
+
+    /* ── Button ───────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .65rem 1.4rem; border-radius: var(--radius-sm);
+      font-size: .88rem; font-weight: 600;
+      text-decoration: none; transition: all .15s;
+      border: none; cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--devin-blue); color: var(--devin-white);
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-outline {
+      background: transparent; color: var(--devin-blue);
+      border: 1.5px solid var(--devin-blue);
+    }
+    .btn-outline:hover { background: var(--devin-pale); }
+
+    /* ── Section Divider ──────────────────────────────── */
+    .divider {
+      width: 60px; height: 3px; background: var(--devin-light);
+      border-radius: 2px; margin: 1.5rem 0;
+    }
+
+    /* ── Footer ───────────────────────────────────────── */
+    footer {
+      text-align: center; padding: 2rem;
+      color: var(--text-muted); font-size: .8rem;
+      border-top: 1px solid var(--devin-pale);
+      margin-top: 2rem;
+    }
+    footer a { color: var(--devin-blue); text-decoration: none; }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 768px) {
+      .slide { padding: 70px 1.25rem 2rem; }
+      .flow { flex-direction: column; }
+      .flow-step::after { display: none; }
+      nav ul { display: none; }
+    }
+
+    /* ── Animations ───────────────────────────────────── */
+    .fade-in {
+      opacity: 0; transform: translateY(16px);
+      animation: fadeUp .5s ease forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .delay-1 { animation-delay: .1s; }
+    .delay-2 { animation-delay: .2s; }
+    .delay-3 { animation-delay: .3s; }
+    .delay-4 { animation-delay: .4s; }
+
+    /* ── Session link ─────────────────────────────────── */
+    a.session-link {
+      color: var(--devin-blue); text-decoration: none;
+      font-weight: 500; font-size: .82rem;
+      border-bottom: 1px dashed var(--devin-light);
+    }
+    a.session-link:hover { border-bottom-style: solid; }
+
+    /* ── Appendix ─────────────────────────────────────── */
+    .appendix-section {
+      background: var(--devin-white);
+      border: 1px solid var(--devin-pale);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══════════════════ NAV ═══════════════════ -->
+<nav>
+  <div class="logo">Devin <span>&times; Superset</span></div>
+  <ul>
+    <li><a href="#intro">What is Devin</a></li>
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#automation">Automation</a></li>
+    <li><a href="#appendix-cicd">Appendix</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════ SLIDE 1 — What is Devin ═══════════════════ -->
+<section class="slide" id="intro">
+  <div class="fade-in">
+    <span class="slide-number">01 &mdash; Introduction</span>
+    <h1>Meet <span class="highlight">Devin</span>, the AI<br>Software Engineer</h1>
+    <p class="subtitle">
+      Built by <strong>Cognition AI</strong>, Devin is an autonomous AI software engineer
+      that can write, run, and test code end-to-end. If you can do it in three hours,
+      Devin can most likely do it.
+    </p>
+  </div>
+
+  <div class="grid grid-2 fade-in delay-1">
+    <div class="card">
+      <div class="icon icon-blue">&#9881;</div>
+      <h3>Autonomous Engineering</h3>
+      <p>Devin operates with its own shell, IDE, and browser. It reads codebases,
+         plans implementations, writes code, runs tests, and opens PRs &mdash;
+         all without constant guidance.</p>
+    </div>
+    <div class="card">
+      <div class="icon icon-green">&#9889;</div>
+      <h3>Parallel Task Execution</h3>
+      <p>Tackle many tasks simultaneously. Devin can run multiple sessions in parallel &mdash;
+         delegating sub-tasks to child sessions for maximum throughput.</p>
+    </div>
+    <div class="card">
+      <div class="icon icon-amber">&#128736;</div>
+      <h3>Full Dev Environment</h3>
+      <p>Each session has a full Linux VM with shell, browser, and IDE.
+         Devin installs dependencies, builds projects, and tests applications
+         end-to-end inside its environment.</p>
+    </div>
+    <div class="card">
+      <div class="icon icon-blue">&#128218;</div>
+      <h3>Knowledge &amp; Playbooks</h3>
+      <p>Devin learns from your codebase via <strong>Knowledge notes</strong> and follows
+         reusable <strong>Playbooks</strong> &mdash; shareable prompt templates
+         that standardize complex workflows across your team.</p>
+    </div>
+  </div>
+
+  <div class="fade-in delay-2" style="margin-top: 2rem;">
+    <div class="callout">
+      <p><strong>Key strengths:</strong> Jira/Linear tickets, code migrations &amp; refactors,
+      bug reproduction &amp; fixes, writing tests, PR reviews, building integrations,
+      maintaining documentation, and security auditing.</p>
+    </div>
+    <div style="margin-top: 1rem; display: flex; gap: .75rem; flex-wrap: wrap;">
+      <a href="https://docs.devin.ai/get-started/devin-intro" class="btn btn-primary" target="_blank">Read the Docs &rarr;</a>
+      <a href="https://app.devin.ai" class="btn btn-outline" target="_blank">Open Devin</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ SLIDE 2 — Capabilities ═══════════════════ -->
+<section class="slide" id="capabilities">
+  <div class="fade-in">
+    <span class="slide-number">02 &mdash; Capabilities in Superset</span>
+    <h1>Devin Capabilities Used in<br><span class="highlight">Apache Superset</span></h1>
+    <p class="subtitle">
+      Three core Devin capabilities were deployed across the Superset repository
+      to establish CI/CD pipelines, conduct security audits, and build reusable knowledge.
+    </p>
+  </div>
+
+  <div class="grid grid-3 fade-in delay-1">
+    <!-- CI/CD Card -->
+    <div class="card">
+      <div class="icon icon-blue">&#128640;</div>
+      <h3>Autonomous CI/CD</h3>
+      <span class="tag tag-blue">4 PRs Merged</span>
+      <span class="tag tag-navy">Session</span>
+      <p style="margin-top: .6rem;">
+        In a single session, Devin autonomously set up a complete CI/CD pipeline:
+      </p>
+      <ul>
+        <li>Added <strong>14 superpowers</strong> + <strong>51 gstack skills</strong> for agent capability</li>
+        <li>Created <strong>4 CI workflows</strong>: PR quality gate, skill validation, code quality, security scanning</li>
+        <li>Fixed <strong>Playwright test stability</strong> for CI reliability</li>
+      </ul>
+      <div style="margin-top: .75rem;">
+        <a href="https://app.devin.ai/sessions/b8d42f70f5c24a1aa615218fea8d93e5" class="session-link" target="_blank">View Session &rarr;</a>
+      </div>
+      <div style="margin-top: .5rem;">
+        <a href="#appendix-cicd" class="session-link">See Appendix A &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Security Audit Card -->
+    <div class="card">
+      <div class="icon icon-red">&#128737;</div>
+      <h3>Autonomous Security Audit</h3>
+      <span class="tag tag-red">5 Findings</span>
+      <span class="tag tag-green">2 Fixed</span>
+      <p style="margin-top: .6rem;">
+        Devin orchestrated <strong>8 parallel child sessions</strong> for a comprehensive
+        security audit spanning Python, npm, Helm, and Docker:
+      </p>
+      <ul>
+        <li>Identified <strong>vm2</strong> critical sandbox escape &mdash; fixed via npm override</li>
+        <li>Identified <strong>axios</strong> SSRF vulnerability &mdash; fixed via npm override</li>
+        <li>Documented Flask CVE, eslint advisory, and Helm pod security gaps</li>
+      </ul>
+      <div style="margin-top: .75rem;">
+        <a href="https://app.devin.ai/sessions/82ec3733992b463c85fdd31bb05d2406" class="session-link" target="_blank">View Session &rarr;</a>
+      </div>
+      <div style="margin-top: .5rem;">
+        <a href="#appendix-security" class="session-link">See Appendix B &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Knowledge / Playbooks Card -->
+    <div class="card">
+      <div class="icon icon-green">&#128214;</div>
+      <h3>Knowledge &amp; Playbooks</h3>
+      <span class="tag tag-green">Reusable</span>
+      <span class="tag tag-blue">Shareable</span>
+      <p style="margin-top: .6rem;">
+        Devin uses <strong>Knowledge notes</strong> and <strong>Playbooks</strong>
+        to retain and apply institutional wisdom:
+      </p>
+      <ul>
+        <li><strong>Knowledge:</strong> Contextual notes (e.g., Security Review Standards) auto-injected into relevant sessions</li>
+        <li><strong>Playbooks:</strong> Reusable prompt templates for repeated tasks (e.g., Security Vulnerability Review playbook)</li>
+        <li>Team members can share playbooks &mdash; one success becomes everyone's success</li>
+      </ul>
+      <div style="margin-top: .75rem;">
+        <a href="https://docs.devin.ai/product-guides/creating-playbooks" class="session-link" target="_blank">Playbooks Docs &rarr;</a>
+      </div>
+      <div style="margin-top: .5rem;">
+        <a href="#appendix-knowledge" class="session-link">See Appendix C &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ SLIDE 3 — Event-Driven Automation ═══════════════════ -->
+<section class="slide" id="automation">
+  <div class="fade-in">
+    <span class="slide-number">03 &mdash; Event-Driven Automation</span>
+    <h1>Automated Security Review<br><span class="highlight">Pipeline</span></h1>
+    <p class="subtitle">
+      An end-to-end event-driven workflow where GitHub Issues automatically trigger
+      Devin security reviews via the API, and results are reported to a live dashboard.
+    </p>
+  </div>
+
+  <!-- API V1 vs V3 -->
+  <div class="fade-in delay-1" style="margin-bottom: 2rem;">
+    <h2>Devin API: v1 vs v3</h2>
+    <div class="divider"></div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Why v1?</h3>
+        <p>The security workflow uses the <strong>Devin API v1</strong> endpoint
+           (<code>POST /v1/sessions</code>) because it is compatible with
+           <strong>Pro accounts</strong>. The v3 API requires ACU quota allocation
+           only available on Enterprise/Teams plans.</p>
+        <table class="clean-table" style="margin-top: .75rem;">
+          <thead>
+            <tr><th>Feature</th><th>v1</th><th>v3</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Endpoint</td><td><code>/v1/sessions</code></td><td><code>/v3/organizations/{org}/sessions</code></td></tr>
+            <tr><td>Auth</td><td>Personal/Service API key</td><td>Org-scoped API key + Org ID</td></tr>
+            <tr><td>Pro Plan</td><td>Supported</td><td>Not supported</td></tr>
+            <tr><td>ACU Quota</td><td>Not required</td><td>Required</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top: .75rem;">
+          <a href="https://app.devin.ai/sessions/488f2b8ee1b44515bc10d2da11191778" class="session-link" target="_blank">Migration Session &rarr;</a>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Migration: PR #8</h3>
+        <p>Devin migrated the workflow in
+           <a href="https://github.com/rayaun/superset/pull/8" class="session-link" target="_blank">PR #8</a>:</p>
+        <div class="code-block" style="margin-top: .75rem;">
+          <span class="comment"># Before (v3 &mdash; Enterprise only)</span><br>
+          curl -X POST \<br>
+          &nbsp;&nbsp;<span class="url">https://api.devin.ai/v3/organizations/${ORG_ID}/sessions</span> \<br>
+          &nbsp;&nbsp;-H <span class="string">"Authorization: Bearer ${API_KEY}"</span><br><br>
+          <span class="comment"># After (v1 &mdash; Pro compatible)</span><br>
+          curl -X POST \<br>
+          &nbsp;&nbsp;<span class="url">https://api.devin.ai/v1/sessions</span> \<br>
+          &nbsp;&nbsp;-H <span class="string">"Authorization: Bearer ${API_KEY}"</span>
+        </div>
+        <p style="margin-top: .5rem;">
+          <span class="tag tag-green">Simplified</span>
+          Removed <code>DEVIN_ORG_ID</code> dependency entirely.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Automation Flow -->
+  <div class="fade-in delay-2" style="margin-bottom: 2rem;">
+    <h2>How the Automation Works</h2>
+    <div class="divider"></div>
+    <p style="color: var(--text-muted); font-size: .9rem; margin-bottom: 1rem;">
+      When a security vulnerability is reported via GitHub Issues, the entire review
+      lifecycle is automated end-to-end:
+    </p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">Step 1</div>
+        <div class="step-title">Issue Created</div>
+        <div class="step-detail">Issue opened with "security" in title or labeled <code>security-vulnerability</code></div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Step 2</div>
+        <div class="step-title">GitHub Actions</div>
+        <div class="step-detail">Workflow validates issue, checks for duplicates, extracts context</div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Step 3</div>
+        <div class="step-title">Devin API Call</div>
+        <div class="step-detail"><code>POST /v1/sessions</code> with issue context &amp; security prompt</div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Step 4</div>
+        <div class="step-title">Devin Reviews</div>
+        <div class="step-detail">Classifies vuln, traces code, assesses severity, implements fix</div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Step 5</div>
+        <div class="step-title">PR &amp; Report</div>
+        <div class="step-detail">Opens PR with fix + tests, comments findings on the issue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Example: Issue #7 -->
+  <div class="fade-in delay-3" style="margin-bottom: 2rem;">
+    <h2>Example: Issue #7 &mdash; XSS in SQL Lab</h2>
+    <div class="divider"></div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>The Vulnerability</h3>
+        <span class="tag tag-red">XSS</span>
+        <span class="tag tag-amber">OWASP A03</span>
+        <span class="tag tag-navy">CWE-79</span>
+        <p style="margin-top: .5rem;">
+          SQL Lab rendered query results as live HTML by default. A crafted payload like
+          <code>&lt;img src=x onerror=alert(document.cookie)&gt;</code> in query results
+          could be rendered as DOM, creating a defense-in-depth gap.
+        </p>
+        <div style="margin-top: .75rem;">
+          <a href="https://github.com/rayaun/superset/issues/7" class="session-link" target="_blank">Issue #7 &rarr;</a>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Devin's Response</h3>
+        <span class="tag tag-green">Automated</span>
+        <span class="tag tag-blue">11 min</span>
+        <ol style="padding-left: 1.1rem; margin-top: .5rem; font-size: .88rem; color: var(--text-muted);">
+          <li>Label <code>security-vulnerability</code> applied to Issue #7</li>
+          <li>GitHub Actions triggered the workflow</li>
+          <li>Devin session <a href="https://app.devin.ai/sessions/c14634e8a3b3490a9f291d60fcdf3969" class="session-link" target="_blank">auto-created</a></li>
+          <li>Classified as OWASP A03, downgraded severity to <strong>Medium</strong></li>
+          <li>Traced <code>renderResultCell</code> &rarr; <code>safeHtmlSpan</code> &rarr; <code>FilterXSS</code></li>
+          <li>Flipped <code>allowHTML</code> default to <code>false</code></li>
+          <li>Added regression tests for XSS payloads</li>
+          <li>Opened <a href="https://github.com/rayaun/superset/pull/9" class="session-link" target="_blank">PR #9</a> &mdash; merged</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Link -->
+  <div class="fade-in delay-4" style="text-align: center; margin-top: 1rem;">
+    <div class="card" style="display: inline-block; max-width: 600px; text-align: center;">
+      <h3 style="margin-bottom: .5rem;">Security Dashboard</h3>
+      <p>All findings, sessions, and remediations are tracked on a live dashboard
+         for engineering review and monitoring.</p>
+      <div style="margin-top: 1rem;">
+        <a href="https://security-dashboard-xwgymjld.devinapps.com/" class="btn btn-primary" target="_blank">
+          Open Security Dashboard &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ APPENDIX A — CI/CD ═══════════════════ -->
+<section class="slide" id="appendix-cicd" style="min-height: auto; padding-top: 4rem;">
+  <div class="fade-in">
+    <span class="slide-number">Appendix A</span>
+    <h2>Autonomous CI/CD Setup</h2>
+    <div class="divider"></div>
+    <p class="subtitle">Session: <a href="https://app.devin.ai/sessions/b8d42f70f5c24a1aa615218fea8d93e5" class="session-link" target="_blank">b8d42f70</a> &mdash; 4 PRs merged in a single session</p>
+  </div>
+
+  <div class="appendix-section fade-in delay-1">
+    <h3>PR #1 &mdash; Superpowers Skills</h3>
+    <span class="tag tag-blue">14 skills</span>
+    <span class="tag tag-green">Merged</span>
+    <p style="margin-top: .5rem;">Added 14 composable development skills from <code>obra/superpowers</code>
+    into <code>.agents/skills/</code> for Devin skill discovery. Skills include brainstorming,
+    test-driven development, systematic debugging, verification, and more.</p>
+    <a href="https://github.com/rayaun/superset/pull/1" class="session-link" target="_blank">View PR #1 &rarr;</a>
+  </div>
+
+  <div class="appendix-section fade-in delay-1">
+    <h3>PR #2 &mdash; CI Workflows</h3>
+    <span class="tag tag-blue">4 workflows</span>
+    <span class="tag tag-green">Merged</span>
+    <p style="margin-top: .5rem;">Created four GitHub Actions workflows:</p>
+    <table class="clean-table">
+      <thead><tr><th>Workflow</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>PR Quality Gate</td><td>Conventional commits, required sections, secret detection, large file blocking</td></tr>
+        <tr><td>Skill Validation</td><td>SKILL.md frontmatter validation (name + description required)</td></tr>
+        <tr><td>Code Quality</td><td>Trailing whitespace, EOF newlines, YAML syntax, merge conflict markers</td></tr>
+        <tr><td>Security</td><td>Dependency review, sensitive file detection, CodeQL static analysis</td></tr>
+      </tbody>
+    </table>
+    <a href="https://github.com/rayaun/superset/pull/2" class="session-link" target="_blank">View PR #2 &rarr;</a>
+  </div>
+
+  <div class="appendix-section fade-in delay-2">
+    <h3>PR #3 &mdash; Gstack Skills</h3>
+    <span class="tag tag-blue">51 skills</span>
+    <span class="tag tag-green">Merged</span>
+    <p style="margin-top: .5rem;">Added all 51 skills from <code>garrytan/gstack</code> including
+    design-html, investigate, browse, QA, deployment, and more. Skills prefixed with
+    <code>gstack-</code> to avoid collisions.</p>
+    <a href="https://github.com/rayaun/superset/pull/3" class="session-link" target="_blank">View PR #3 &rarr;</a>
+  </div>
+
+  <div class="appendix-section fade-in delay-2">
+    <h3>PR #4 &mdash; Playwright Test Stability</h3>
+    <span class="tag tag-amber">CI Fix</span>
+    <span class="tag tag-green">Merged</span>
+    <p style="margin-top: .5rem;">Fixed 1 failed and 11 flaky Playwright tests by tuning CI timeouts,
+    reducing parallelism to avoid Flask server overload, and adding <code>ERR_EMPTY_RESPONSE</code>
+    retry logic to page objects.</p>
+    <a href="https://github.com/rayaun/superset/pull/4" class="session-link" target="_blank">View PR #4 &rarr;</a>
+  </div>
+
+  <div class="callout fade-in delay-3">
+    <p><strong>Key Approach:</strong> Devin analyzed the repo structure, identified gaps in CI coverage,
+    and autonomously created workflows that enforce code quality, security scanning, and skill validation
+    &mdash; all in one session without manual intervention.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════ APPENDIX B — Security Audit ═══════════════════ -->
+<section class="slide" id="appendix-security" style="min-height: auto; padding-top: 4rem;">
+  <div class="fade-in">
+    <span class="slide-number">Appendix B</span>
+    <h2>Autonomous Security Audit</h2>
+    <div class="divider"></div>
+    <p class="subtitle">Session: <a href="https://app.devin.ai/sessions/82ec3733992b463c85fdd31bb05d2406" class="session-link" target="_blank">82ec3733</a> &mdash; 8 parallel child sessions, 1 PR merged</p>
+  </div>
+
+  <div class="appendix-section fade-in delay-1">
+    <h3>Audit Scope &amp; Methodology</h3>
+    <p>Devin orchestrated 8 child sessions to audit the full stack in parallel:</p>
+    <div style="display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem;">
+      <span class="tag tag-navy">Python Backend</span>
+      <span class="tag tag-navy">npm Frontend</span>
+      <span class="tag tag-navy">Helm Charts</span>
+      <span class="tag tag-navy">Docker Config</span>
+      <span class="tag tag-navy">Flask Framework</span>
+      <span class="tag tag-navy">Dependency Tree</span>
+    </div>
+  </div>
+
+  <div class="appendix-section fade-in delay-1">
+    <h3>Top 5 Findings</h3>
+    <table class="clean-table">
+      <thead>
+        <tr><th>#</th><th>Finding</th><th>Severity</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>vm2</strong> &mdash; Critical sandbox escape (geostyler &rarr; typescript-json-schema &rarr; vm2 3.10.5)</td>
+          <td><span class="tag tag-red">Critical</span></td>
+          <td><span class="tag tag-green">Fixed</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>eslint-plugin-i18n-strings</strong> &mdash; Critical advisory, no fix available</td>
+          <td><span class="tag tag-red">Critical</span></td>
+          <td><span class="tag tag-amber">Observed</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>axios</strong> &mdash; SSRF / credential leakage via transitive deps</td>
+          <td><span class="tag tag-amber">High</span></td>
+          <td><span class="tag tag-green">Fixed</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>Flask 2.3.3</strong> &mdash; Missing Vary: Cookie header (CVE-2026-27205)</td>
+          <td><span class="tag tag-amber">High</span></td>
+          <td><span class="tag tag-amber">Observed</span></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><strong>Helm chart</strong> &mdash; Pods run as root, hardcoded DB password, no resource limits</td>
+          <td><span class="tag tag-amber">High</span></td>
+          <td><span class="tag tag-amber">Observed</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <a href="https://github.com/rayaun/superset/pull/6" class="session-link" target="_blank">View PR #6 &rarr;</a>
+  </div>
+</section>
+
+<!-- ═══════════════════ APPENDIX C — Knowledge & Playbooks ═══════════════════ -->
+<section class="slide" id="appendix-knowledge" style="min-height: auto; padding-top: 4rem;">
+  <div class="fade-in">
+    <span class="slide-number">Appendix C</span>
+    <h2>Knowledge &amp; Playbooks</h2>
+    <div class="divider"></div>
+    <p class="subtitle">Reusable intelligence that compounds across every Devin session</p>
+  </div>
+
+  <div class="grid grid-2 fade-in delay-1">
+    <div class="appendix-section">
+      <h3>Knowledge Notes</h3>
+      <p>Contextual notes attached to repos or orgs. Auto-injected into sessions
+         when relevant triggers match.</p>
+      <div style="margin-top: .75rem;">
+        <strong>Example: Security Review Standards</strong>
+        <ul style="margin-top: .4rem;">
+          <li>Uses OWASP Top 10 classification (A01&ndash;A10)</li>
+          <li>Superset-specific patterns: parameterized queries, CSP headers, RLS filters</li>
+          <li>PR requirements: conventional commits, security label, advisory section</li>
+          <li>Test requirements: regression tests, edge cases, SupersetTestCase base</li>
+        </ul>
+      </div>
+      <div class="callout" style="margin-top: .75rem;">
+        <p>Knowledge notes ensure every Devin session follows your team's standards
+           automatically &mdash; no need to repeat instructions.</p>
+      </div>
+    </div>
+
+    <div class="appendix-section">
+      <h3>Playbooks</h3>
+      <p>Reusable, shareable prompt templates for repeated tasks. Like a custom
+         system prompt that any team member can attach to a session.</p>
+      <div style="margin-top: .75rem;">
+        <strong>Anatomy of a Playbook:</strong>
+        <ul style="margin-top: .4rem;">
+          <li><strong>Procedure:</strong> Step-by-step actions (setup, task, delivery)</li>
+          <li><strong>Specifications:</strong> Postconditions &mdash; what should be true when done</li>
+          <li><strong>Advice:</strong> Correct Devin's priors, share preferred approaches</li>
+          <li><strong>Forbidden Actions:</strong> Hard constraints Devin must not violate</li>
+          <li><strong>Required from User:</strong> Tokens, info, or access needed</li>
+        </ul>
+      </div>
+      <div style="margin-top: .75rem;">
+        <strong>Tip:</strong> Run 2+ parallel Devins with the same playbook to quickly
+        identify errors. Chat with Devin to help, then update the playbook for next time.
+      </div>
+      <div style="margin-top: .75rem;">
+        <a href="https://docs.devin.ai/product-guides/creating-playbooks" class="session-link" target="_blank">Playbook Documentation &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer>
+  <p>
+    Built with <a href="https://devin.ai" target="_blank">Devin AI</a> &times;
+    <a href="https://github.com/rayaun/superset" target="_blank">rayaun/superset</a>
+    &nbsp;&bull;&nbsp; May 2026
+  </p>
+</footer>
+
+<!-- ═══════════════════ Active Nav Highlight ═══════════════════ -->
+<script>
+  const sections = document.querySelectorAll('.slide[id]');
+  const navLinks = document.querySelectorAll('nav ul li a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.toggle('active',
+            link.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-40% 0px -60% 0px' });
+
+  sections.forEach(section => observer.observe(section));
+</script>
+
+</body>
+</html>

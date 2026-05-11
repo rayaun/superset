@@ -38,6 +38,7 @@ A live dashboard summarizing all findings and fixes is available at:
 - [CI/CD Workflows](#cicd-workflows)
 - [Project Structure](#project-structure)
 - [Verifying the Fixes](#verifying-the-fixes)
+- [Walkthrough Presentation](#walkthrough-presentation)
 - [Additional Resources](#additional-resources)
 
 ---
@@ -194,6 +195,9 @@ superset/
 │   ├── docker-init.sh            # Database initialization script
 │   ├── docker-bootstrap.sh       # Application bootstrap script
 │   └── pythonpath_dev/           # Python configuration overrides
+├── docs/
+│   └── devin-walkthrough/
+│       └── index.html            # Standalone walkthrough presentation
 ├── superset/                     # Python backend (Flask, SQLAlchemy)
 ├── superset-frontend/            # React/TypeScript frontend
 │   └── package.json              # Includes npm override security fixes
@@ -283,9 +287,35 @@ The Docker setup uses a multi-service architecture:
 
 ---
 
+## Walkthrough Presentation
+
+A self-contained HTML walkthrough presentation is included at [`docs/devin-walkthrough/index.html`](docs/devin-walkthrough/index.html). It covers:
+
+1. **What is Devin** — Introduction to Devin AI as an autonomous software engineer
+2. **Devin Capabilities in Superset** — Autonomous CI/CD, security audit workflow, knowledge & playbooks
+3. **Event-Driven Automation** — API integration, end-to-end automation flow, live XSS fix example
+
+To view the presentation, open the file directly in a browser:
+
+```bash
+# macOS
+open docs/devin-walkthrough/index.html
+
+# Linux
+xdg-open docs/devin-walkthrough/index.html
+
+# Windows
+start docs/devin-walkthrough/index.html
+```
+
+Or from within a running Docker container, it is served as a static asset.
+
+---
+
 ## Additional Resources
 
 - **Live Security Dashboard:** [https://security-dashboard-xwgymjld.devinapps.com/](https://security-dashboard-xwgymjld.devinapps.com/)
+- **Walkthrough Presentation:** [`docs/devin-walkthrough/index.html`](docs/devin-walkthrough/index.html)
 - **Repository:** [https://github.com/rayaun/superset](https://github.com/rayaun/superset)
 - **Apache Superset Docs:** [https://superset.apache.org](https://superset.apache.org)
 - **Devin AI:** [https://devin.ai](https://devin.ai)
