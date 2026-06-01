@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devin AI &times; Apache Superset &mdash; Walkthrough</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --devin-dark:    #0a1628;
+      --devin-navy:    #0f2140;
+      --devin-blue:    #2563eb;
+      --devin-light:   #60a5fa;
+      --devin-pale:    #dbeafe;
+      --devin-ice:     #eff6ff;
+      --devin-white:   #ffffff;
+      --devin-accent:  #38bdf8;
+      --devin-green:   #34d399;
+      --devin-amber:   #fbbf24;
+      --devin-red:     #f87171;
+      --text-primary:  #1e293b;
+      --text-muted:    #64748b;
+      --shadow-sm:     0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:     0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:     0 8px 32px rgba(0,0,0,.12);
+      --radius:        12px;
+      --radius-sm:     8px;
+    }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--devin-ice); color: var(--text-primary);
+      line-height: 1.6; overflow-x: hidden;
+    }
+
+    /* ── Navigation ───────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--devin-pale);
+      padding: 0 2rem; display: flex; align-items: center;
+      justify-content: space-between; height: 56px;
+    }
+    nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--devin-blue); letter-spacing: -.02em; }
+    nav .logo span { color: var(--text-muted); font-weight: 400; }
+    nav ul { list-style: none; display: flex; gap: .25rem; }
+    nav ul li a {
+      text-decoration: none; color: var(--text-muted);
+      font-size: .82rem; font-weight: 500;
+      padding: .4rem .75rem; border-radius: 6px; transition: all .15s;
+    }
+    nav ul li a:hover, nav ul li a.active { color: var(--devin-blue); background: var(--devin-pale); }
+
+    /* ── Sections ─────────────────────────────────────── */
+    .slide {
+      min-height: 100vh; padding: 80px 2rem 3rem;
+      display: flex; flex-direction: column; justify-content: center;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .slide-auto { min-height: auto; padding-top: 4rem; }
+    .slide-number {
+      display: inline-block; font-size: .7rem; font-weight: 700;
+      letter-spacing: .1em; color: var(--devin-blue); text-transform: uppercase;
+      background: var(--devin-pale); padding: .25rem .7rem;
+      border-radius: 20px; margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3rem); font-weight: 800;
+      letter-spacing: -.03em; color: var(--devin-dark); line-height: 1.15;
+      margin-bottom: .75rem;
+    }
+    h1 .highlight { color: var(--devin-blue); }
+    h2 { font-size: 1.6rem; font-weight: 700; color: var(--devin-dark); margin-bottom: .5rem; letter-spacing: -.02em; }
+    h3 { font-size: 1.15rem; font-weight: 600; color: var(--devin-navy); margin-bottom: .4rem; }
+    h4 { font-size: .95rem; font-weight: 600; color: var(--devin-navy); margin-bottom: .3rem; }
+    .subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 680px; margin-bottom: 2rem; }
+
+    /* ── Cards & Grid ─────────────────────────────────── */
+    .grid { display: grid; gap: 1.25rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card {
+      background: var(--devin-white); border: 1px solid var(--devin-pale);
+      border-radius: var(--radius); padding: 1.5rem;
+      box-shadow: var(--shadow-sm); transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .card .icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; margin-bottom: .75rem;
+    }
+    .icon-blue  { background: var(--devin-pale); color: var(--devin-blue); }
+    .icon-green { background: #d1fae5; color: #059669; }
+    .icon-amber { background: #fef3c7; color: #d97706; }
+    .icon-red   { background: #fee2e2; color: #dc2626; }
+    .card p, .card li { font-size: .9rem; color: var(--text-muted); line-height: 1.55; }
+    .card ul, .card ol { padding-left: 1.1rem; margin-top: .4rem; }
+    .card ul li, .card ol li { margin-bottom: .25rem; }
+
+    /* ── Tags ─────────────────────────────────────────── */
+    .tag {
+      display: inline-block; font-size: .7rem; font-weight: 600;
+      padding: .2rem .55rem; border-radius: 4px;
+      letter-spacing: .02em; margin-right: .3rem; margin-bottom: .3rem;
+    }
+    .tag-blue   { background: var(--devin-pale); color: var(--devin-blue); }
+    .tag-green  { background: #d1fae5; color: #059669; }
+    .tag-amber  { background: #fef3c7; color: #d97706; }
+    .tag-red    { background: #fee2e2; color: #dc2626; }
+    .tag-navy   { background: #1e293b; color: #e2e8f0; }
+
+    /* ── Flow Diagram ─────────────────────────────────── */
+    .flow { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding: 1rem 0; }
+    .flow-step {
+      flex: 1; min-width: 155px; background: var(--devin-white);
+      border: 1px solid var(--devin-pale); border-radius: var(--radius-sm);
+      padding: 1rem; position: relative; text-align: center;
+    }
+    .flow-step::after {
+      content: ''; position: absolute; right: -18px; top: 50%;
+      transform: translateY(-50%); border: 8px solid transparent;
+      border-left: 10px solid var(--devin-light); z-index: 1;
+    }
+    .flow-step:last-child::after { display: none; }
+    .flow-step .step-num { font-size: .65rem; font-weight: 700; color: var(--devin-blue); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .3rem; }
+    .flow-step .step-title { font-size: .85rem; font-weight: 600; color: var(--devin-dark); }
+    .flow-step .step-detail { font-size: .75rem; color: var(--text-muted); margin-top: .25rem; }
+
+    /* ── Code Block ───────────────────────────────────── */
+    .code-block {
+      background: var(--devin-dark); color: #e2e8f0;
+      border-radius: var(--radius-sm); padding: 1.2rem 1.5rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: .8rem; line-height: 1.7; overflow-x: auto; margin: 1rem 0;
+    }
+    .code-block .comment { color: #64748b; }
+    .code-block .keyword { color: var(--devin-accent); }
+    .code-block .string  { color: var(--devin-green); }
+    .code-block .url     { color: var(--devin-light); text-decoration: underline; }
+
+    /* ── Callout ──────────────────────────────────────── */
+    .callout {
+      background: var(--devin-pale); border-left: 4px solid var(--devin-blue);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 1rem 1.25rem; margin: 1rem 0;
+    }
+    .callout p { font-size: .88rem; color: var(--devin-navy); }
+    .callout strong { color: var(--devin-blue); }
+    .callout-amber {
+      background: #fef3c7; border-left-color: #d97706;
+    }
+    .callout-amber p { color: #92400e; }
+    .callout-amber strong { color: #d97706; }
+
+    /* ── Table ────────────────────────────────────────── */
+    .clean-table { width: 100%; border-collapse: collapse; margin: .75rem 0; font-size: .85rem; }
+    .clean-table th {
+      text-align: left; font-weight: 600; color: var(--devin-navy);
+      border-bottom: 2px solid var(--devin-pale); padding: .6rem .75rem;
+      font-size: .78rem; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .clean-table td { padding: .55rem .75rem; border-bottom: 1px solid #f1f5f9; color: var(--text-muted); }
+    .clean-table tr:hover td { background: var(--devin-ice); }
+
+    /* ── Button ───────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .65rem 1.4rem; border-radius: var(--radius-sm);
+      font-size: .88rem; font-weight: 600; text-decoration: none;
+      transition: all .15s; border: none; cursor: pointer;
+    }
+    .btn-primary { background: var(--devin-blue); color: var(--devin-white); }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-outline { background: transparent; color: var(--devin-blue); border: 1.5px solid var(--devin-blue); }
+    .btn-outline:hover { background: var(--devin-pale); }
+    .btn-sm { padding: .45rem 1rem; font-size: .8rem; }
+
+    /* ── Divider ──────────────────────────────────────── */
+    .divider { width: 60px; height: 3px; background: var(--devin-light); border-radius: 2px; margin: 1.5rem 0; }
+
+    /* ── Reader Note ───────────────────────────────── */
+    .reader-note {
+      background: #f8fafc; border: 1px dashed #cbd5e1;
+      border-radius: var(--radius-sm);
+      margin: 1rem 0; position: relative; overflow: hidden;
+    }
+    .reader-note-toggle {
+      display: flex; align-items: center; gap: .5rem;
+      width: 100%; padding: .6rem 1.25rem;
+      background: none; border: none; cursor: pointer;
+      font-size: .7rem; font-weight: 700; color: #94a3b8;
+      letter-spacing: .08em; text-transform: uppercase;
+      font-family: inherit;
+    }
+    .reader-note-toggle:hover { color: var(--devin-blue); }
+    .reader-note-toggle::before {
+      content: '\25B6'; font-size: .55rem; transition: transform .2s;
+      display: inline-block;
+    }
+    .reader-note.open .reader-note-toggle::before { transform: rotate(90deg); }
+    .reader-note-body {
+      display: none; padding: 0 1.25rem 1rem;
+    }
+    .reader-note.open .reader-note-body { display: block; }
+    .reader-note p { font-size: .85rem; color: #475569; font-style: italic; }
+
+    /* ── Tooltip / Popup ──────────────────────────────── */
+    .tooltip-trigger {
+      color: var(--devin-blue); font-weight: 600; cursor: help;
+      border-bottom: 2px dotted var(--devin-light); position: relative;
+    }
+    .side-panel-backdrop {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10,22,40,.35); z-index: 200;
+      transition: opacity .3s;
+    }
+    .side-panel-backdrop.active { display: block; }
+    .side-panel {
+      position: fixed; top: 0; right: -520px; bottom: 0; z-index: 210;
+      width: 500px; max-width: 92vw;
+      background: var(--devin-white);
+      box-shadow: -4px 0 24px rgba(0,0,0,.15);
+      transition: right .35s cubic-bezier(.4,0,.2,1);
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .side-panel.active { right: 0; }
+    .side-panel-header {
+      position: sticky; top: 0; z-index: 1;
+      background: var(--devin-white);
+      border-bottom: 1px solid var(--devin-pale);
+      padding: 1.25rem 1.5rem; display: flex;
+      align-items: center; justify-content: space-between;
+    }
+    .side-panel-header h2 { font-size: 1.15rem; margin: 0; }
+    .side-panel-body { padding: 1.5rem; }
+    .side-panel-close {
+      background: var(--devin-ice); border: 1px solid var(--devin-pale);
+      border-radius: 6px; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: var(--text-muted); cursor: pointer;
+      transition: all .15s; flex-shrink: 0;
+    }
+    .side-panel-close:hover { background: var(--devin-pale); color: var(--devin-dark); }
+    @media (max-width: 540px) {
+      .side-panel { width: 100vw; max-width: 100vw; right: -100vw; }
+    }
+
+    /* ── Session Timeline ─────────────────────────────── */
+    .timeline { position: relative; padding-left: 2rem; margin: 1rem 0; }
+    .timeline::before {
+      content: ''; position: absolute; left: .5rem; top: 0; bottom: 0;
+      width: 2px; background: var(--devin-pale);
+    }
+    .timeline-item { position: relative; margin-bottom: 1.25rem; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -1.75rem; top: .35rem;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--devin-light); border: 2px solid var(--devin-blue);
+    }
+    .timeline-item .tl-time {
+      font-size: .7rem; font-weight: 600; color: var(--devin-blue);
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .timeline-item .tl-title { font-size: .88rem; font-weight: 600; color: var(--devin-dark); }
+    .timeline-item .tl-detail { font-size: .82rem; color: var(--text-muted); margin-top: .15rem; }
+
+    /* ── Stat Row ─────────────────────────────────────── */
+    .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 1rem 0; }
+    .stat {
+      background: var(--devin-white); border: 1px solid var(--devin-pale);
+      border-radius: var(--radius-sm); padding: .75rem 1.25rem;
+      text-align: center; min-width: 120px;
+    }
+    .stat .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--devin-blue); }
+    .stat .stat-label { font-size: .72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+
+    /* ── Links ─────────────────────────────────────────── */
+    a.session-link {
+      color: var(--devin-blue); text-decoration: none;
+      font-weight: 500; font-size: .82rem;
+      border-bottom: 1px dashed var(--devin-light);
+    }
+    a.session-link:hover { border-bottom-style: solid; }
+
+    /* ── Appendix ─────────────────────────────────────── */
+    .appendix-section {
+      background: var(--devin-white); border: 1px solid var(--devin-pale);
+      border-radius: var(--radius); padding: 2rem;
+      margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);
+    }
+
+    /* ── Footer ───────────────────────────────────────── */
+    footer {
+      text-align: center; padding: 2rem; color: var(--text-muted);
+      font-size: .8rem; border-top: 1px solid var(--devin-pale); margin-top: 2rem;
+    }
+    footer a { color: var(--devin-blue); text-decoration: none; }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 768px) {
+      .slide { padding: 70px 1.25rem 2rem; }
+      .flow { flex-direction: column; }
+      .flow-step::after { display: none; }
+      nav ul { display: none; }
+      .stats { flex-direction: column; }
+    }
+
+    /* ── Animations ───────────────────────────────────── */
+    .fade-in { opacity: 0; transform: translateY(16px); animation: fadeUp .5s ease forwards; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    .delay-1 { animation-delay: .1s; }
+    .delay-2 { animation-delay: .2s; }
+    .delay-3 { animation-delay: .3s; }
+    .delay-4 { animation-delay: .4s; }
+
+    /* ── Comparison Row ───────────────────────────────── */
+    .compare-row { display: flex; gap: 1.25rem; margin: 1.5rem 0; }
+    .compare-col { flex: 1; }
+    .compare-col h4 { margin-bottom: .5rem; }
+    @media (max-width: 768px) { .compare-row { flex-direction: column; } }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="logo">Devin <span>&times; Superset</span></div>
+  <ul>
+    <li><a href="#what">The Problem</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#why">Why Devin</a></li>
+    <li><a href="#demo-issue7">Demo: XSS</a></li>
+    <li><a href="#demo-mako">Demo: CVE</a></li>
+    <li><a href="#incidents">Incidents</a></li>
+    <li><a href="#appendix-arch">Architecture</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 1 — WHAT: Problem Framing
+     ═══════════════════════════════════════════════════════════ -->
+<section class="slide" id="what">
+  <div class="fade-in">
+    <span class="slide-number">01 &mdash; The Problem</span>
+    <h1>Security Vulnerabilities<br>Don't Wait for <span class="highlight">Your Sprint</span></h1>
+    <p class="subtitle">
+      Every open-source project faces the same challenge: security issues arrive unpredictably,
+      demand immediate attention, and pull engineers off planned work. The question isn't
+      <em>whether</em> vulnerabilities will appear &mdash; it's whether your response is
+      manual or automated.
+    </p>
+  </div>
+
+  <div class="grid grid-3 fade-in delay-1">
+    <div class="card">
+      <div class="icon icon-red">&#9888;</div>
+      <h3>The Interrupt Problem</h3>
+      <p>A critical CVE drops on Tuesday. An engineer stops feature work, context-switches
+         to triage, traces the code path, writes a fix, adds tests, and opens a PR.
+         That's <strong>half a day gone</strong> &mdash; best case.</p>
+    </div>
+    <div class="card">
+      <div class="icon icon-amber">&#9201;</div>
+      <h3>The Response Gap</h3>
+      <p>Average time to remediate a high-severity vulnerability is
+         <strong>60+ days</strong> across the industry (Veracode State of Software Security).
+         Most teams don't lack the skill &mdash; they lack the bandwidth.</p>
+    </div>
+    <div class="card">
+      <div class="icon icon-blue">&#128269;</div>
+      <h3>The Scaling Challenge</h3>
+      <p>Superset has <strong>500k+ lines</strong> across Python, TypeScript, Helm, and Docker.
+         A full security audit requires expertise across every layer &mdash;
+         and nobody has time to do it regularly.</p>
+    </div>
+  </div>
+
+  <div class="fade-in delay-2" style="margin-top: 2rem;">
+    <h2>What We Built</h2>
+    <div class="divider"></div>
+    <p style="color: var(--text-muted); font-size: .95rem; max-width: 700px;">
+      An <strong>event-driven security automation pipeline</strong> where GitHub Issues
+      automatically trigger Devin &mdash; an autonomous AI software engineer &mdash;
+      to triage, classify, fix, test, and open PRs for security vulnerabilities.
+      No human intervention required between issue creation and fix delivery.
+    </p>
+
+    <div class="stats fade-in delay-3">
+      <div class="stat"><div class="stat-value">&lt;5m</div><div class="stat-label">Time-to-Action</div></div>
+      <div class="stat"><div class="stat-value">1h 05m</div><div class="stat-label">Fastest Resolution</div></div>
+      <div class="stat"><div class="stat-value">3</div><div class="stat-label">Incidents Tracked</div></div>
+      <div class="stat"><div class="stat-value">0</div><div class="stat-label">Human Interrupts</div></div>
+    </div>
+
+    <div class="reader-note fade-in delay-3" style="margin-top: .75rem;">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+      <p><strong>Where these numbers come from:</strong> The
+        <a href="https://security-dashboard-kgqhhiud.devinapps.com/" target="_blank">Security Incident Dashboard</a>
+        pulls live data from the GitHub REST API. <strong>TTA</strong> (Time-to-Action) = issue opened &rarr; first PR opened.
+        <strong>TTR</strong> (Time-to-Resolution) = issue opened &rarr; closing PR merged.
+        #10 (mako CVE) had a TTA of <strong>4m 19s</strong> and TTR of <strong>1h 05m</strong> &mdash; from issue filed to PR merged with 70/70 CI checks passing.
+        All with zero engineer interrupts &mdash; Devin handled triage, code, tests, and PR autonomously.</p>
+    </div>
+    </div>
+
+    <div class="callout fade-in delay-3">
+      <p><strong>This is not a scanner.</strong> Scanners find problems. Devin finds problems,
+         traces the code, assesses real-world severity, writes the fix with regression tests,
+         and delivers a mergeable PR. The difference is <em>end-to-end resolution</em>.</p>
+    </div>
+
+    <div class="reader-note fade-in delay-4">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+      <p>Devin already has published automation templates for this pattern:
+         <a href="https://docs.devin.ai/automation-templates/security-vulnerability-scan" target="_blank">Security Vulnerability Scan</a> (weekly CVE scanning with auto-patch PRs) and
+         <a href="https://docs.devin.ai/automation-templates/owasp-security-hardening" target="_blank">OWASP Security Hardening</a> (Top 10 audit with fix PRs).
+         Our Superset implementation extends this pattern with event-driven triggering via GitHub Issues,
+         rather than just scheduled scans.</p>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 2 — HOW: Demo the System
+     ═══════════════════════════════════════════════════════════ -->
+<section class="slide" id="how">
+  <div class="fade-in">
+    <span class="slide-number">02 &mdash; How It Works</span>
+    <h1>The System <span class="highlight">In Action</span></h1>
+    <p class="subtitle">
+      Walk through the end-to-end pipeline: from a GitHub Issue to a merged PR,
+      with Devin working autonomously behind the scenes.
+    </p>
+  </div>
+
+  <!-- Pipeline Flow -->
+  <div class="fade-in delay-1" style="margin-bottom: 2rem;">
+    <h2>End-to-End Pipeline</h2>
+    <div class="divider"></div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">Trigger</div>
+        <div class="step-title">Issue Filed</div>
+        <div class="step-detail">Label <code>security-vulnerability</code> or "security" in title</div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Validate</div>
+        <div class="step-title">GitHub Actions</div>
+        <div class="step-detail">Check for duplicates, extract issue context (title, body, labels)</div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Dispatch</div>
+        <div class="step-title">Devin API v1</div>
+        <div class="step-detail"><code>POST /v1/sessions</code> with security-focused prompt</div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Execute</div>
+        <div class="step-title">Devin Reviews</div>
+        <div class="step-detail">Classify, trace code, assess severity, implement fix + tests</div>
+      </div>
+      <div class="flow-step" style="margin-left: 20px;">
+        <div class="step-num">Deliver</div>
+        <div class="step-title">PR &amp; Report</div>
+        <div class="step-detail">Open PR, comment findings on issue, update dashboard</div>
+      </div>
+    </div>
+
+    <div class="reader-note">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+      <p><strong>Demo tip:</strong> Open the
+         <a href="https://app.devin.ai/sessions/c14634e8a3b3490a9f291d60fcdf3969" target="_blank">Devin session for Issue #7</a>
+         side-by-side with this page. Walk through each step in the session log while
+         referencing the flow diagram above. The session shows real-time shell output,
+         code analysis, and PR creation.</p>
+    </div>
+    </div>
+  </div>
+
+  <!-- GitHub Actions Workflow -->
+  <div class="fade-in delay-2" style="margin-bottom: 2rem;">
+    <h2>Behind the Scenes: The Workflow</h2>
+    <div class="divider"></div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>GitHub Actions Trigger</h3>
+        <p style="margin-bottom: .75rem;">The workflow (<code>.github/workflows/devin-security-review.yml</code>) watches for two events:</p>
+        <div class="code-block">
+          <span class="keyword">on</span>:<br>
+          &nbsp;&nbsp;<span class="keyword">issues</span>:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;types: [<span class="string">opened</span>, <span class="string">labeled</span>]<br><br>
+          <span class="comment"># Trigger when:</span><br>
+          <span class="comment"># 1. Label "security-vulnerability" applied</span><br>
+          <span class="comment"># 2. New issue with "security" in title</span>
+        </div>
+        <p>Before dispatching, the workflow validates the issue (prevents duplicate sessions)
+           and extracts context for Devin's prompt.</p>
+      </div>
+      <div class="card">
+        <h3>Devin API v1 Call</h3>
+        <p style="margin-bottom: .75rem;">The workflow sends a structured prompt with full issue context:</p>
+        <div class="code-block">
+          curl -X POST \<br>
+          &nbsp;&nbsp;<span class="url">https://api.devin.ai/v1/sessions</span> \<br>
+          &nbsp;&nbsp;-H <span class="string">"Authorization: Bearer ${API_KEY}"</span> \<br>
+          &nbsp;&nbsp;-d <span class="string">'{ "prompt": "Security vulnerability<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;reported... Classify, trace, fix,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;test, open PR." }'</span>
+        </div>
+        <p style="margin-top: .5rem;">
+          <span class="tag tag-green">v1 API</span> Used instead of v3 because it works with
+          <strong>Pro accounts</strong> &mdash; no ACU quota allocation needed.
+          <a href="#appendix-api" class="session-link">See API details &rarr;</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- What Devin Does -->
+  <div class="fade-in delay-2" style="margin-bottom: 2rem;">
+    <h2>What Devin Does (Autonomously)</h2>
+    <div class="divider"></div>
+    <p style="color: var(--text-muted); font-size: .9rem; margin-bottom: 1rem;">
+      Once the session starts, Devin operates with zero human input. Here's the
+      9-step process it follows, powered by Knowledge notes and a security-focused prompt:
+    </p>
+
+    <div class="grid grid-3">
+      <div class="card" style="border-top: 3px solid var(--devin-blue);">
+        <h4>1. Read &amp; Understand</h4>
+        <p>Reads the full issue body, classifies vulnerability type against OWASP Top 10</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-blue);">
+        <h4>2. Search Codebase</h4>
+        <p>Uses grep, AST analysis, and file reading to trace affected code paths from entry to impact</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-blue);">
+        <h4>3. Assess Severity</h4>
+        <p>Evaluates real exploitability, not just theoretical risk. May upgrade or downgrade the reported severity</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-light);">
+        <h4>4. Design Fix</h4>
+        <p>Plans defense-in-depth approach: input validation, sanitization, secure defaults</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-light);">
+        <h4>5. Implement</h4>
+        <p>Writes the code change, following existing conventions and patterns in the codebase</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-light);">
+        <h4>6. Write Tests</h4>
+        <p>Adds regression tests that reproduce the original vulnerability and verify the fix</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-green);">
+        <h4>7. Run Checks</h4>
+        <p>Executes pre-commit hooks, lint, type checks, and test suite</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-green);">
+        <h4>8. Open PR</h4>
+        <p>Creates a PR with security advisory, OWASP classification, and fix explanation</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--devin-green);">
+        <h4>9. Report Back</h4>
+        <p>Comments on the original issue with findings, severity assessment, and PR link</p>
+      </div>
+    </div>
+
+    <div class="reader-note" style="margin-top: 1.25rem;">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+      <p><strong>Demo tip:</strong> In the Devin session, you can see each of these steps happening in real-time.
+         The shell tab shows grep/search commands, the IDE shows code edits, and the conversation
+         shows Devin's reasoning. Open
+         <a href="https://app.devin.ai/sessions/c14634e8a3b3490a9f291d60fcdf3969" target="_blank">session c14634e8</a>
+         and scroll through the timeline to walk the audience through each step.</p>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 3 — LIVE DEMO: Issue #7
+     ═══════════════════════════════════════════════════════════ -->
+<section class="slide" id="demo-issue7">
+  <div class="fade-in">
+    <span class="slide-number">03 &mdash; Live Example #1</span>
+    <h1>Issue #7: XSS in <span class="highlight">SQL Lab</span></h1>
+    <p class="subtitle">
+      A test-case security vulnerability used to validate the pipeline. Demonstrates
+      Devin&rsquo;s ability to handle code-level XSS fixes with defense-in-depth analysis.
+    </p>
+
+    <div class="stats" style="margin-bottom: 1.5rem;">
+      <div class="stat"><div class="stat-value">1h 22m</div><div class="stat-label">Time-to-Resolution (TTR)</div></div>
+      <div class="stat"><div class="stat-value">+82/&minus;4</div><div class="stat-label">Lines Changed (7 files)</div></div>
+      <div class="stat"><div class="stat-value">82/82</div><div class="stat-label">CI Checks Passed</div></div>
+      <div class="stat"><div class="stat-value">4</div><div class="stat-label">Regression Tests Added</div></div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="fade-in delay-1" style="margin-bottom: 2rem;">
+    <div class="grid grid-2">
+      <div>
+        <h3>Session Timeline</h3>
+        <div class="timeline" style="margin-top: 1rem;">
+          <div class="timeline-item">
+            <div class="tl-time">T+0:00</div>
+            <div class="tl-title">Issue #7 labeled <code>security-vulnerability</code></div>
+            <div class="tl-detail">GitHub Actions workflow triggers automatically</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+0:15</div>
+            <div class="tl-title">Devin session created via API</div>
+            <div class="tl-detail">Bot comments on issue with session link and status table</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+1:00</div>
+            <div class="tl-title">Vulnerability classified</div>
+            <div class="tl-detail">OWASP A03 (Injection/XSS), CWE-79. Severity downgraded from High to <strong>Medium</strong></div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+3:00</div>
+            <div class="tl-title">Code path traced</div>
+            <div class="tl-detail"><code>renderResultCell</code> &rarr; <code>safeHtmlSpan</code> &rarr; <code>FilterXSS</code> &mdash;
+              identified <span class="tooltip-trigger" onclick="openPanel()">defense-in-depth gap</span></div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+6:00</div>
+            <div class="tl-title">Fix implemented</div>
+            <div class="tl-detail">Flipped <code>allowHTML</code> default to <code>false</code> in 3 locations</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+8:00</div>
+            <div class="tl-title">Regression tests added</div>
+            <div class="tl-detail">Tests verify XSS payloads render as escaped text, not live DOM</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+10:00</div>
+            <div class="tl-title">PR #9 opened</div>
+            <div class="tl-detail">Full security advisory, OWASP classification, and fix explanation</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+11:00</div>
+            <div class="tl-title">Issue commented with findings</div>
+            <div class="tl-detail">Detailed write-up posted back to Issue #7. <strong>Done.</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3>The Vulnerability</h3>
+        <div class="card" style="margin-top: 1rem;">
+          <span class="tag tag-red">XSS</span>
+          <span class="tag tag-amber">OWASP A03</span>
+          <span class="tag tag-navy">CWE-79</span>
+          <p style="margin-top: .5rem;">
+            SQL Lab rendered query results as <strong>live HTML by default</strong>.
+            A crafted payload in query results:
+          </p>
+          <div class="code-block" style="margin: .75rem 0;">
+            <span class="keyword">SELECT</span> <span class="string">'&lt;img src=x onerror=alert(document.cookie)&gt;'</span><br>
+            &nbsp;&nbsp;<span class="keyword">AS</span> xss_test;
+          </div>
+          <p>would be rendered as a DOM element, creating a
+             <span class="tooltip-trigger" onclick="openPanel()">defense-in-depth gap</span>.</p>
+        </div>
+
+        <h3 style="margin-top: 1.25rem;">The Fix</h3>
+        <div class="card" style="margin-top: .5rem;">
+          <span class="tag tag-green">Merged</span>
+          <span class="tag tag-blue">PR #9</span>
+          <ul style="margin-top: .5rem;">
+            <li>Flipped <code>SqllabIsRenderHtmlEnabled</code> default: <code>true</code> &rarr; <code>false</code></li>
+            <li>Flipped <code>FilterableTable.allowHTML</code> prop: <code>true</code> &rarr; <code>false</code></li>
+            <li>Users who opted in retain preference via <code>localStorage</code></li>
+            <li>Documented behavior change in <code>UPDATING.md</code></li>
+            <li>4 new regression tests for XSS payloads</li>
+          </ul>
+          <div style="margin-top: .75rem; display: flex; gap: .5rem; flex-wrap: wrap;">
+            <a href="https://github.com/rayaun/superset/pull/9" class="btn btn-sm btn-outline" target="_blank">View PR #9 &rarr;</a>
+            <a href="https://github.com/rayaun/superset/issues/7" class="btn btn-sm btn-outline" target="_blank">View Issue #7 &rarr;</a>
+            <a href="https://app.devin.ai/sessions/c14634e8a3b3490a9f291d60fcdf3969" class="btn btn-sm btn-primary" target="_blank">Open Devin Session &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard CTA -->
+  <div class="fade-in delay-3" style="text-align: center; margin-top: 1.5rem;">
+    <div class="card" style="display: inline-block; max-width: 600px; text-align: center;">
+      <h3>Security Dashboard</h3>
+      <p>All findings, sessions, and remediations are tracked on a live dashboard.</p>
+      <div style="margin-top: 1rem;">
+        <a href="https://security-dashboard-kgqhhiud.devinapps.com/" class="btn btn-primary" target="_blank">
+          Open Security Dashboard &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 3b — LIVE DEMO #2: mako CVE
+     ═══════════════════════════════════════════════════════════ -->
+<section class="slide" id="demo-mako">
+  <div class="fade-in">
+    <span class="slide-number">04 &mdash; Live Example #2</span>
+    <h1>mako CVE: <span class="highlight">Dependency Fix</span></h1>
+    <p class="subtitle">
+      A real CVE reported, auto-triaged, patched, and merged &mdash;
+      4 minutes from issue to first action, 1 hour 5 minutes to full resolution.
+    </p>
+
+    <div class="stats" style="margin-bottom: 1.5rem;">
+      <div class="stat"><div class="stat-value">4m 19s</div><div class="stat-label">Time-to-Action (TTA)</div></div>
+      <div class="stat"><div class="stat-value">1h 05m</div><div class="stat-label">Time-to-Resolution (TTR)</div></div>
+      <div class="stat"><div class="stat-value">+4/&minus;3</div><div class="stat-label">Lines Changed (3 files)</div></div>
+      <div class="stat"><div class="stat-value">70/70</div><div class="stat-label">CI Checks Passed</div></div>
+    </div>
+  </div>
+
+  <div class="fade-in delay-1" style="margin-bottom: 2rem;">
+    <div class="grid grid-2">
+      <div>
+        <h3>Session Timeline</h3>
+        <div class="timeline" style="margin-top: 1rem;">
+          <div class="timeline-item">
+            <div class="tl-time">T+0:00</div>
+            <div class="tl-title">Issue #10 filed &amp; labeled <code>security-vulnerability</code></div>
+            <div class="tl-detail">GitHub Actions workflow triggers automatically</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+4:19</div>
+            <div class="tl-title">Devin session created, triage complete</div>
+            <div class="tl-detail">Classified as A01 (Broken Access Control), CWE-22 path traversal, Medium severity</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+7:00</div>
+            <div class="tl-title">Codebase search: 3 pin locations found</div>
+            <div class="tl-detail"><code>grep -ri mako</code> &rarr; <code>base.in</code>, <code>base.txt</code>, <code>development.txt</code></div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+8:00</div>
+            <div class="tl-title">Verified fix version on PyPI</div>
+            <div class="tl-detail"><code>pip index versions mako</code> &rarr; confirmed 1.3.12 available, <code>pip-audit</code> clean</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+10:00</div>
+            <div class="tl-title">PR #12 opened</div>
+            <div class="tl-detail">Bumped <code>mako</code> across all 3 dependency files, added CVE annotation, full audit trail</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+43:00</div>
+            <div class="tl-title">CI completed: 63 passed, 0 failed</div>
+            <div class="tl-detail">Full backend suite, Cypress, Playwright, CodeQL, pre-commit, dependency review</div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-time">T+1:05:00</div>
+            <div class="tl-title">PR merged, post-merge validation</div>
+            <div class="tl-detail">Alembic template rendering test + Superset boot smoke test &mdash; both passed</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3>The Vulnerability</h3>
+        <div class="card" style="margin-top: 1rem;">
+          <div style="display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .75rem;">
+            <span class="tag tag-red">CVE-2026-44307</span>
+            <span class="tag tag-blue">OWASP A01</span>
+            <span class="tag tag-blue">CWE-22</span>
+          </div>
+          <p><code>mako</code> was pinned to <strong>1.3.11</strong>. Version <strong>1.3.12</strong> patches a
+             <strong>path traversal</strong> vulnerability: backslash characters in template URIs
+             aren&rsquo;t normalized on Windows, allowing a crafted URI like
+             <code>..\..\..\windows\win.ini</code> to escape the template root.</p>
+          <div class="callout-amber callout" style="margin-top: .75rem;">
+            <p><strong>Blast radius:</strong> Read access to files outside the template directory on
+               Windows-hosted Superset deployments. Reachable via Alembic migration scripts,
+               engine-spec template paths, and any extension that loads Mako templates by URI.</p>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 1.25rem;">The Fix</h3>
+        <div class="card" style="margin-top: .5rem;">
+          <span class="tag tag-green">Merged</span>
+          <span class="tag tag-blue" style="margin-left: .25rem;">PR #12</span>
+          <ul style="margin-top: .75rem; font-size: .88rem; color: var(--text-muted);">
+            <li><code>requirements/base.in</code>: floor bumped to <code>&gt;=1.3.12,&lt;2.0.0</code> + CVE annotation</li>
+            <li><code>requirements/base.txt</code>: pinned to <code>mako==1.3.12</code></li>
+            <li><code>requirements/development.txt</code>: pinned to <code>mako==1.3.12</code></li>
+            <li><code>pip-audit</code> verified clean: 0 known vulnerabilities</li>
+            <li>Post-merge: Alembic template rendering + Superset boot validated</li>
+          </ul>
+          <div style="margin-top: 1rem; display: flex; gap: .5rem; flex-wrap: wrap;">
+            <a href="https://github.com/rayaun/superset/pull/12" class="btn btn-sm btn-outline" target="_blank">View PR #12 &rarr;</a>
+            <a href="https://github.com/rayaun/superset/issues/10" class="btn btn-sm btn-outline" target="_blank">View Issue #10 &rarr;</a>
+            <a href="https://app.devin.ai/sessions/64a166f502644e63af1c1ff36e9795ee" class="btn btn-sm btn-primary" target="_blank">Open Devin Session &rarr;</a>
+          </div>
+        </div>
+
+        <div class="reader-note" style="margin-top: 1rem;">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+          <p><strong>Reader note:</strong> This demo shows a different class of vulnerability &mdash;
+             a <strong>dependency CVE</strong> rather than a code-level XSS. Devin&rsquo;s approach adapts:
+             instead of tracing code paths, it searched for all pinned references via <code>grep</code>,
+             verified the fix version on PyPI, bumped 3 files, and ran <code>pip-audit</code> to confirm
+             the CVE was resolved. The full audit trail is embedded in the
+             <a href="https://github.com/rayaun/superset/pull/12" target="_blank">PR description</a>.</p>
+        </div>
+    </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reader-note fade-in delay-2">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+    <p><strong>Key difference from Demo #1:</strong> Issue #7 (XSS) required <em>code changes</em>
+       across 7 files (+82 lines, regression tests, config changes). Issue #10 (mako CVE) required
+       <em>dependency management</em> across 3 files (+4 lines). Devin handled both autonomously,
+       adapting its approach to the vulnerability type &mdash; from code-level defense-in-depth fixes
+       to supply-chain version bumps with <code>pip-audit</code> verification.</p>
+  </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ALL TRACKED INCIDENTS (from Security Dashboard)
+     ═══════════════════════════════════════════════════════════ -->
+<section class="slide" id="incidents">
+  <div class="fade-in">
+    <span class="slide-number">04b &mdash; Summary</span>
+    <h1>All Tracked <span class="highlight">Incidents</span></h1>
+    <p class="subtitle">
+      Live data from the <a href="https://security-dashboard-kgqhhiud.devinapps.com/" target="_blank">Security Incident Dashboard</a>,
+      which pulls metrics from the GitHub REST API.
+    </p>
+    <div class="divider"></div>
+
+    <div class="card" style="overflow-x: auto;">
+      <table class="clean-table">
+        <thead>
+          <tr><th>#</th><th>Title</th><th>Severity</th><th>State</th><th>TTA</th><th>TTR</th><th>Code &Delta;</th><th>CI</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://github.com/rayaun/superset/issues/7" target="_blank">#7</a></td>
+            <td>Potential XSS in SQL Lab <em style="font-size:.75rem;color:var(--text-muted);">(test case)</em></td>
+            <td><span class="tag tag-red">High</span></td>
+            <td><span class="tag tag-green">Resolved</span></td>
+            <td style="color:var(--text-muted);">51m *</td>
+            <td>1h 22m</td>
+            <td>+82/&minus;4 (7 files)</td>
+            <td><span class="tag tag-green">82/82 pass</span></td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/rayaun/superset/issues/10" target="_blank">#10</a></td>
+            <td>mako CVE (path traversal)</td>
+            <td><span class="tag tag-navy">&mdash;</span></td>
+            <td><span class="tag tag-green">Resolved</span></td>
+            <td>4m 19s</td>
+            <td>1h 05m</td>
+            <td>+4/&minus;3 (3 files)</td>
+            <td><span class="tag tag-green">70/70 pass</span></td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/rayaun/superset/issues/11" target="_blank">#11</a></td>
+            <td>HTTP Client Request Handling</td>
+            <td><span class="tag tag-navy">&mdash;</span></td>
+            <td><span class="tag tag-green">Resolved</span></td>
+            <td>10m 35s</td>
+            <td>1h 54m</td>
+            <td>+119/&minus;1 (3 files)</td>
+            <td><span class="tag tag-amber">73/74 (1 fail)</span></td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/rayaun/superset/issues/17" target="_blank">#17</a></td>
+            <td>Unpinned Base Image Tag</td>
+            <td><span class="tag tag-navy">&mdash;</span></td>
+            <td><span class="tag tag-amber">Open</span></td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.25rem;">
+      <div class="card" style="flex: 1; min-width: 140px; text-align: center; padding: .75rem;">
+        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">4</div>
+        <div style="font-size: .8rem; color: var(--text-muted);">Total Incidents</div>
+      </div>
+      <div class="card" style="flex: 1; min-width: 140px; text-align: center; padding: .75rem;">
+        <div style="font-size: 1.5rem; font-weight: 700; color: var(--green);">3</div>
+        <div style="font-size: .8rem; color: var(--text-muted);">Resolved</div>
+      </div>
+      <div class="card" style="flex: 1; min-width: 140px; text-align: center; padding: .75rem;">
+        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">10m 35s</div>
+        <div style="font-size: .8rem; color: var(--text-muted);">Median TTA</div>
+      </div>
+      <div class="card" style="flex: 1; min-width: 140px; text-align: center; padding: .75rem;">
+        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">1h 22m</div>
+        <div style="font-size: .8rem; color: var(--text-muted);">Median TTR</div>
+      </div>
+    </div>
+
+    <div class="reader-note" style="margin-top: 1.25rem;">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+        <p><strong>How to read this:</strong> <strong>TTA</strong> (Time-to-Action) = issue opened &rarr; first PR opened.
+           <strong>TTR</strong> (Time-to-Resolution) = issue opened &rarr; closing PR merged.
+           * #7&rsquo;s TTA is excluded from benchmarks (test case with manual trigger delay).
+           #10 remains the fastest real-world benchmark: <strong>4m 19s TTA</strong>, <strong>1h 05m TTR</strong>.
+           #11 resolved at <strong>10m 35s TTA</strong>, <strong>1h 54m TTR</strong> with 73/74 CI (1 pre-existing failure).
+           #17 is the newest &mdash; currently open and in progress.</p>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <a href="https://security-dashboard-kgqhhiud.devinapps.com/" class="btn btn-primary" target="_blank">
+        Open Live Dashboard &rarr;
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 5 — WHY: The Case for Devin
+     ═══════════════════════════════════════════════════════════ -->
+<section class="slide" id="why">
+  <div class="fade-in">
+    <span class="slide-number">05 &mdash; Why Devin</span>
+    <h1>What an <span class="highlight">Autonomous Agent</span><br>Makes Possible</h1>
+    <p class="subtitle">
+      This system isn't just "AI-assisted" &mdash; it's autonomously operated.
+      Here's what that enables that wouldn't be practical otherwise.
+    </p>
+  </div>
+
+  <div class="grid grid-2 fade-in delay-1">
+    <div class="card" style="border-left: 4px solid var(--devin-blue);">
+      <h3>Zero-Interrupt Security Response</h3>
+      <p>Traditional: engineer sees issue, context-switches, triages, fixes, opens PR.
+         <strong>Minimum half a day.</strong></p>
+      <p style="margin-top: .5rem;">With Devin: issue filed &rarr; PR delivered. No human interrupted.
+         Engineers review the PR when convenient, like any other code review.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--devin-green);">
+      <h3>Full-Stack Audit at Scale</h3>
+      <p>Devin spawned <strong>8 parallel child sessions</strong> to audit Python, TypeScript,
+         npm, Helm, and Docker simultaneously. One engineer would need days for this scope.
+         Devin did it in one session.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--devin-accent);">
+      <h3>Severity Judgment, Not Just Detection</h3>
+      <p>A scanner would flag Issue #7 as "High" because XSS. Devin <strong>actually read the
+         sanitizer code</strong>, verified the canonical payload doesn't execute, and correctly
+         downgraded to Medium. That nuance matters for prioritization.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--devin-amber);">
+      <h3>Compound Learning</h3>
+      <p><strong>Knowledge notes</strong> persist across sessions: OWASP classification rules,
+         Superset-specific patterns, testing standards. Every session makes the next one better.
+         <strong>Playbooks</strong> let anyone on the team trigger the same workflow.</p>
+    </div>
+  </div>
+
+  <div class="fade-in delay-2" style="margin-top: 2rem;">
+    <h2>Traditional vs. Devin-Automated</h2>
+    <div class="divider"></div>
+    <table class="clean-table">
+      <thead>
+        <tr><th>Dimension</th><th>Traditional Workflow</th><th>Devin-Automated</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Time to first response</strong></td>
+          <td>Hours to days (depends on engineer availability)</td>
+          <td><strong>&lt;5 minutes</strong> (4m 19s for mako CVE, fully autonomous)</td>
+        </tr>
+        <tr>
+          <td><strong>Time to PR</strong></td>
+          <td>4&ndash;8 hours (with context switching)</td>
+          <td><strong>1h 05m &ndash; 1h 22m</strong> (fully autonomous)</td>
+        </tr>
+        <tr>
+          <td><strong>Engineer interruption</strong></td>
+          <td>Full context switch, half-day minimum</td>
+          <td><strong>None</strong> (review PR at convenience)</td>
+        </tr>
+        <tr>
+          <td><strong>Coverage</strong></td>
+          <td>Spot checks, reactive only</td>
+          <td><strong>Full-stack</strong> (8 parallel audit sessions)</td>
+        </tr>
+        <tr>
+          <td><strong>Severity assessment</strong></td>
+          <td>Manual triage by security engineer</td>
+          <td><strong>Automated</strong> with code-level verification</td>
+        </tr>
+        <tr>
+          <td><strong>Regression tests</strong></td>
+          <td>Often skipped under time pressure</td>
+          <td><strong>Always included</strong> (part of Devin's process)</td>
+        </tr>
+        <tr>
+          <td><strong>Knowledge retention</strong></td>
+          <td>In engineer's head, lost on team changes</td>
+          <td><strong>Persistent</strong> via Knowledge notes &amp; Playbooks</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout fade-in delay-3" style="margin-top: 1.5rem;">
+    <p><strong>The key insight:</strong> Devin doesn't replace the security engineer. It transforms
+       security response from an <em>interrupt-driven emergency</em> into an
+       <em>asynchronous code review</em>. The engineer's role shifts from "drop everything and fix"
+       to "review and approve" &mdash; a much better use of senior time.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APPENDIX — Architecture: Skills & Setup
+     ═══════════════════════════════════════════════════════════ -->
+<section class="slide slide-auto" id="appendix-arch">
+  <div class="fade-in">
+    <span class="slide-number">Appendix A &mdash; Architecture</span>
+    <h2>Skills: Why Gstack &amp; Superpowers Matter</h2>
+    <div class="divider"></div>
+    <p class="subtitle">
+      Before Devin can autonomously review security issues, it needs the right
+      <strong>capabilities</strong> installed. Skills are composable behavior modules that
+      extend what Devin can do in a session.
+    </p>
+  </div>
+
+  <div class="grid grid-2 fade-in delay-1">
+    <div class="appendix-section">
+      <h3>Superpowers Skills <span class="tag tag-blue">14 skills</span></h3>
+      <p>From <a href="https://github.com/obra/superpowers" target="_blank">obra/superpowers</a> &mdash;
+         foundational development methodology skills.</p>
+      <table class="clean-table" style="margin-top: .75rem;">
+        <thead><tr><th>Skill</th><th>Why It Matters Here</th></tr></thead>
+        <tbody>
+          <tr><td><strong>systematic-debugging</strong></td><td>Root cause investigation before proposing fixes &mdash; critical for security where wrong fixes create new vulnerabilities</td></tr>
+          <tr><td><strong>test-driven-development</strong></td><td>Ensures regression tests are written <em>before</em> the fix, verifying the vulnerability is real</td></tr>
+          <tr><td><strong>verification-before-completion</strong></td><td>Evidence-based completion claims &mdash; Devin must prove the fix works before opening a PR</td></tr>
+          <tr><td><strong>brainstorming</strong></td><td>Explores design space before implementation &mdash; considers defense-in-depth vs. minimal fix</td></tr>
+          <tr><td><strong>dispatching-parallel-agents</strong></td><td>Enables the 8-session parallel security audit &mdash; each child session audits a different layer</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top: .75rem;">
+        <a href="https://app.devin.ai/sessions/b8d42f70f5c24a1aa615218fea8d93e5" class="session-link" target="_blank">Setup session &rarr;</a>
+        &nbsp;|&nbsp;
+        <a href="https://github.com/rayaun/superset/pull/1" class="session-link" target="_blank">PR #1 &rarr;</a>
+      </p>
+    </div>
+
+    <div class="appendix-section">
+      <h3>Gstack Skills <span class="tag tag-blue">51 skills</span></h3>
+      <p>From <a href="https://github.com/garrytan/gstack" target="_blank">garrytan/gstack</a> &mdash;
+         production-grade development and QA toolkit.</p>
+      <table class="clean-table" style="margin-top: .75rem;">
+        <thead><tr><th>Skill</th><th>Why It Matters Here</th></tr></thead>
+        <tbody>
+          <tr><td><strong>gstack-cso</strong></td><td>Chief Security Officer mode &mdash; infrastructure-first security audit with OWASP Top 10 and STRIDE threat modeling</td></tr>
+          <tr><td><strong>gstack-investigate</strong></td><td>4-phase debugging (investigate, analyze, hypothesize, implement) with the "Iron Law: no fixes without root cause"</td></tr>
+          <tr><td><strong>gstack-qa</strong></td><td>Systematic QA testing with iterative bug fixing, health scores, and ship-readiness summary</td></tr>
+          <tr><td><strong>gstack-review</strong></td><td>Pre-landing PR review: SQL safety, LLM trust boundary violations, conditional side effects</td></tr>
+          <tr><td><strong>gstack-design-html</strong></td><td>Production-quality HTML/CSS generation &mdash; used to build this very presentation</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top: .75rem;">
+        <a href="https://app.devin.ai/sessions/b8d42f70f5c24a1aa615218fea8d93e5" class="session-link" target="_blank">Setup session &rarr;</a>
+        &nbsp;|&nbsp;
+        <a href="https://github.com/rayaun/superset/pull/3" class="session-link" target="_blank">PR #3 &rarr;</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="callout fade-in delay-2" style="margin-top: 1.25rem;">
+    <p><strong>Architectural decision:</strong> Skills were added <em>before</em> the security workflow
+       was built. This is intentional &mdash; they form the capability layer that Devin draws on during
+       autonomous operation. Without <code>systematic-debugging</code>, Devin might propose fixes without
+       understanding root cause. Without <code>dispatching-parallel-agents</code>, the full-stack audit would
+       run sequentially instead of in parallel. The skills are the <em>foundation</em>, not decoration.</p>
+  </div>
+
+  <div class="reader-note fade-in delay-2">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+    <p><strong>For the engineering lead:</strong> Think of skills like a senior engineer's mental playbook.
+       When a human security engineer sees a vuln report, they follow a mental checklist: reproduce,
+       trace, assess, fix, test, document. Skills codify that checklist so Devin follows the same rigor
+       every time, regardless of which specific session handles the issue.</p>
+  </div>
+    </div>
+</section>
+
+<!-- ═══ APPENDIX — CI/CD Setup ═══ -->
+<section class="slide slide-auto" id="appendix-cicd">
+  <div class="fade-in">
+    <span class="slide-number">Appendix B &mdash; CI/CD Foundation</span>
+    <h2>CI/CD Workflows Created by Devin</h2>
+    <div class="divider"></div>
+    <p class="subtitle">
+      Session: <a href="https://app.devin.ai/sessions/b8d42f70f5c24a1aa615218fea8d93e5" class="session-link" target="_blank">b8d42f70</a> &mdash; 4 PRs merged autonomously
+    </p>
+  </div>
+
+  <div class="grid grid-2 fade-in delay-1">
+    <div class="appendix-section">
+      <h3>PR #2 &mdash; 4 CI Workflows</h3>
+      <span class="tag tag-blue">PR Quality Gate</span>
+      <span class="tag tag-blue">Skill Validation</span>
+      <span class="tag tag-blue">Code Quality</span>
+      <span class="tag tag-red">Security Scanning</span>
+      <p style="margin-top: .5rem;">Conventional commit enforcement, SKILL.md frontmatter validation,
+         trailing whitespace / YAML / merge markers, dependency review + CodeQL.</p>
+      <a href="https://github.com/rayaun/superset/pull/2" class="session-link" target="_blank">View PR #2 &rarr;</a>
+    </div>
+    <div class="appendix-section">
+      <h3>PR #4 &mdash; Playwright Stability</h3>
+      <span class="tag tag-amber">CI Fix</span>
+      <span class="tag tag-green">Merged</span>
+      <p style="margin-top: .5rem;">Fixed 12 flaky tests by tuning CI timeouts, reducing parallelism
+         to prevent Flask overload, and adding <code>ERR_EMPTY_RESPONSE</code> retry logic.</p>
+      <a href="https://github.com/rayaun/superset/pull/4" class="session-link" target="_blank">View PR #4 &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ APPENDIX — Security Audit ═══ -->
+<section class="slide slide-auto" id="appendix-audit">
+  <div class="fade-in">
+    <span class="slide-number">Appendix C &mdash; Security Audit</span>
+    <h2>Full-Stack Security Audit</h2>
+    <div class="divider"></div>
+    <p class="subtitle">
+      Session: <a href="https://app.devin.ai/sessions/82ec3733992b463c85fdd31bb05d2406" class="session-link" target="_blank">82ec3733</a> &mdash; 8 parallel child sessions
+    </p>
+  </div>
+
+  <div class="appendix-section fade-in delay-1">
+    <h3>Top 5 Findings</h3>
+    <table class="clean-table">
+      <thead><tr><th>#</th><th>Finding</th><th>Severity</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><strong>vm2</strong> &mdash; Critical sandbox escape (geostyler &rarr; typescript-json-schema &rarr; vm2 3.10.5)</td><td><span class="tag tag-red">Critical</span></td><td><span class="tag tag-green">Fixed</span></td></tr>
+        <tr><td>2</td><td><strong>eslint-plugin-i18n-strings</strong> &mdash; Critical advisory, no fix available</td><td><span class="tag tag-red">Critical</span></td><td><span class="tag tag-amber">Observed</span></td></tr>
+        <tr><td>3</td><td><strong>axios</strong> &mdash; SSRF / credential leakage via transitive deps</td><td><span class="tag tag-amber">High</span></td><td><span class="tag tag-green">Fixed</span></td></tr>
+        <tr><td>4</td><td><strong>Flask 2.3.3</strong> &mdash; Missing Vary: Cookie header (CVE-2026-27205)</td><td><span class="tag tag-amber">High</span></td><td><span class="tag tag-amber">Observed</span></td></tr>
+        <tr><td>5</td><td><strong>Helm chart</strong> &mdash; Pods run as root, hardcoded DB password, no resource limits</td><td><span class="tag tag-amber">High</span></td><td><span class="tag tag-amber">Observed</span></td></tr>
+      </tbody>
+    </table>
+    <a href="https://github.com/rayaun/superset/pull/6" class="session-link" target="_blank">View PR #6 &rarr;</a>
+  </div>
+</section>
+
+<!-- ═══ APPENDIX — API v1 vs v3 ═══ -->
+<section class="slide slide-auto" id="appendix-api">
+  <div class="fade-in">
+    <span class="slide-number">Appendix D &mdash; API Details</span>
+    <h2>Devin API: v1 vs v3</h2>
+    <div class="divider"></div>
+    <p class="subtitle">
+      Session: <a href="https://app.devin.ai/sessions/488f2b8ee1b44515bc10d2da11191778" class="session-link" target="_blank">488f2b8e</a> &mdash;
+      <a href="https://github.com/rayaun/superset/pull/8" class="session-link" target="_blank">PR #8</a> migrated v3 &rarr; v1
+    </p>
+  </div>
+
+  <div class="grid grid-2 fade-in delay-1">
+    <div class="appendix-section">
+      <h3>Why v1?</h3>
+      <p>The Devin API has three versions. We chose v1 for Pro account compatibility:</p>
+      <table class="clean-table" style="margin-top: .75rem;">
+        <thead><tr><th>Feature</th><th>v1</th><th>v3</th></tr></thead>
+        <tbody>
+          <tr><td>Endpoint</td><td><code>/v1/sessions</code></td><td><code>/v3/organizations/{org}/sessions</code></td></tr>
+          <tr><td>Auth</td><td>Personal/Service API key</td><td>Org-scoped API key + Org ID</td></tr>
+          <tr><td>Pro Plan</td><td>Supported</td><td>Not supported</td></tr>
+          <tr><td>ACU Quota</td><td>Not required</td><td>Required</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="appendix-section">
+      <h3>Migration</h3>
+      <div class="code-block">
+        <span class="comment"># Before (v3 &mdash; Enterprise only)</span><br>
+        curl -X POST \<br>
+        &nbsp;&nbsp;<span class="url">https://api.devin.ai/v3/organizations/${ORG_ID}/sessions</span> \<br>
+        &nbsp;&nbsp;-H <span class="string">"Authorization: Bearer ${API_KEY}"</span><br><br>
+        <span class="comment"># After (v1 &mdash; Pro compatible)</span><br>
+        curl -X POST \<br>
+        &nbsp;&nbsp;<span class="url">https://api.devin.ai/v1/sessions</span> \<br>
+        &nbsp;&nbsp;-H <span class="string">"Authorization: Bearer ${API_KEY}"</span>
+      </div>
+      <p style="margin-top: .5rem;">
+        <span class="tag tag-green">Simplified</span>
+        Removed <code>DEVIN_ORG_ID</code> secret dependency entirely.
+      </p>
+    </div>
+  </div>
+
+  <div class="reader-note fade-in delay-1">
+      <button class="reader-note-toggle" onclick="this.parentElement.classList.toggle('open')">Reader Note</button>
+      <div class="reader-note-body">
+    <p><strong>For the audience:</strong> The <a href="https://docs.devin.ai/api-reference/overview" target="_blank">Devin API docs</a>
+       cover all three versions. v1 is the simplest entry point &mdash; one API key, one endpoint.
+       v3 adds org-level session management and ACU billing, which is more relevant for Enterprise
+       teams managing Devin across multiple repos.</p>
+  </div>
+    </div>
+</section>
+
+<!-- ═══ APPENDIX — Knowledge & Playbooks ═══ -->
+<section class="slide slide-auto" id="appendix-knowledge">
+  <div class="fade-in">
+    <span class="slide-number">Appendix E &mdash; Knowledge &amp; Playbooks</span>
+    <h2>Compound Learning</h2>
+    <div class="divider"></div>
+  </div>
+
+  <div class="grid grid-2 fade-in delay-1">
+    <div class="appendix-section">
+      <h3>Knowledge Notes</h3>
+      <p>Contextual notes auto-injected into relevant sessions. Example:</p>
+      <div style="margin-top: .75rem;">
+        <strong>Security Review Standards (active in this repo)</strong>
+        <ul style="margin-top: .4rem;">
+          <li>OWASP Top 10 classification (A01&ndash;A10)</li>
+          <li>Superset-specific: parameterized queries, CSP headers, RLS filters</li>
+          <li>PR format: conventional commits, security label, advisory section</li>
+          <li>Test requirements: regression tests, <code>SupersetTestCase</code> base</li>
+        </ul>
+      </div>
+      <div class="callout" style="margin-top: .75rem;">
+        <p>Every Devin session on this repo gets these standards injected automatically.
+           No one needs to remember to include them in the prompt.</p>
+      </div>
+    </div>
+    <div class="appendix-section">
+      <h3>Playbooks</h3>
+      <p>Reusable prompt templates. Any team member can trigger the same workflow.</p>
+      <div style="margin-top: .75rem;">
+        <strong>Anatomy of a Playbook:</strong>
+        <ul style="margin-top: .4rem;">
+          <li><strong>Procedure:</strong> Step-by-step actions (setup, task, delivery)</li>
+          <li><strong>Specifications:</strong> Postconditions &mdash; what should be true when done</li>
+          <li><strong>Advice:</strong> Correct priors, share preferred approaches</li>
+          <li><strong>Forbidden Actions:</strong> Hard constraints</li>
+          <li><strong>Required from User:</strong> Tokens, access needed</li>
+        </ul>
+      </div>
+      <p style="margin-top: .75rem;">
+        <a href="https://docs.devin.ai/product-guides/creating-playbooks" class="session-link" target="_blank">Playbook Documentation &rarr;</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <p>
+    Built with <a href="https://devin.ai" target="_blank">Devin AI</a> &times;
+    <a href="https://github.com/rayaun/superset" target="_blank">rayaun/superset</a>
+    &nbsp;&bull;&nbsp; May 2026
+  </p>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════
+     POPUP: Defense-in-Depth Gap
+     ═══════════════════════════════════════════════════════════ -->
+<!-- Side Panel: Defense-in-Depth Gap -->
+<div class="side-panel-backdrop" id="did-backdrop" onclick="closePanel()"></div>
+<div class="side-panel" id="did-panel">
+  <div class="side-panel-header">
+    <h2>Defense-in-Depth Gap</h2>
+    <button class="side-panel-close" onclick="closePanel()">&times;</button>
+  </div>
+  <div class="side-panel-body">
+
+    <h4>The Concept</h4>
+    <p style="font-size: .9rem; color: var(--text-muted); margin-bottom: 1rem;">
+      <strong>Defense in depth</strong> means layering multiple independent security controls so that
+      if one fails, others still protect the system. A <strong>defense-in-depth gap</strong>
+      exists when you're relying on a single control &mdash; even if that control currently works.
+    </p>
+
+    <h4>In Issue #7&rsquo;s Case</h4>
+    <p style="font-size: .9rem; color: var(--text-muted); margin-bottom: .75rem;">
+      SQL Lab used <code>js-xss</code> (a sanitizer library) to strip dangerous attributes like
+      <code>onerror</code> from HTML before rendering. The canonical attack payload
+      <code>&lt;img src=x onerror=alert(...)&gt;</code> was <strong>already blocked</strong>
+      by the sanitizer. So why fix it?
+    </p>
+
+    <div class="callout-amber callout" style="margin-bottom: 1.25rem;">
+      <p><strong>The gap:</strong> HTML rendering was <em>on by default</em>. The system relied
+         entirely on <code>js-xss</code> to catch every possible attack vector. One library.
+         One point of failure. If <code>js-xss</code> ever has a bypass (and sanitizer libraries
+         regularly do), every SQL Lab user is immediately vulnerable.</p>
+    </div>
+
+    <h4 style="margin-top: 1.25rem;">How Severe Is This? Does It Actually Matter?</h4>
+    <div class="divider" style="margin: .5rem 0 1rem;"></div>
+
+    <div style="margin-bottom: 1rem;">
+      <div style="display: flex; align-items: flex-start; gap: .75rem; margin-bottom: 1rem; padding: .75rem; background: #f0fdf4; border-radius: var(--radius-sm); border-left: 3px solid #34d399;">
+        <span class="tag tag-green" style="flex-shrink: 0; margin-top: .1rem;">Low</span>
+        <div>
+          <strong style="font-size: .85rem;">Immediate exploitability</strong>
+          <p style="font-size: .82rem; color: var(--text-muted); margin-top: .15rem;">The canonical XSS payload doesn&rsquo;t execute today. The <code>js-xss</code> sanitizer strips <code>onerror</code> attributes correctly.</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: .75rem; margin-bottom: 1rem; padding: .75rem; background: #fef3c7; border-radius: var(--radius-sm); border-left: 3px solid #fbbf24;">
+        <span class="tag tag-amber" style="flex-shrink: 0; margin-top: .1rem;">Medium</span>
+        <div>
+          <strong style="font-size: .85rem;">Real-world risk</strong>
+          <p style="font-size: .82rem; color: var(--text-muted); margin-top: .15rem;">Even sanitized HTML causes outbound requests. An <code>&lt;img src="https://attacker.com/track"&gt;</code> tag loads and tracks users without triggering any XSS filter.</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: .75rem; margin-bottom: 1rem; padding: .75rem; background: #fee2e2; border-radius: var(--radius-sm); border-left: 3px solid #f87171;">
+        <span class="tag tag-red" style="flex-shrink: 0; margin-top: .1rem;">High</span>
+        <div>
+          <strong style="font-size: .85rem;">Future risk</strong>
+          <p style="font-size: .82rem; color: var(--text-muted); margin-top: .15rem;">Any future <code>js-xss</code> bypass instantly affects all SQL Lab users with HTML rendering on &mdash; which was <strong>everyone, by default</strong>.</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: .75rem; padding: .75rem; background: var(--devin-ice); border-radius: var(--radius-sm); border-left: 3px solid var(--devin-blue);">
+        <span class="tag tag-blue" style="flex-shrink: 0; margin-top: .1rem;">Fix</span>
+        <div>
+          <strong style="font-size: .85rem;">Correct posture</strong>
+          <p style="font-size: .82rem; color: var(--text-muted); margin-top: .15rem;"><strong>Escape by default, opt-in to render.</strong> This is exactly what the fix does.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider" style="margin: 1.25rem 0;"></div>
+
+    <h4>The Bottom Line</h4>
+    <p style="font-size: .9rem; color: var(--text-muted); margin-top: .5rem;">
+      <strong>Yes, it matters.</strong> Not because the app is exploitable right now, but because
+      security defaults should be safe. The previous default was &ldquo;trust the sanitizer with everything.&rdquo;
+      The new default is &ldquo;show plain text unless the user explicitly wants HTML.&rdquo;
+    </p>
+    <p style="font-size: .9rem; color: var(--text-muted); margin-top: .5rem;">
+      That&rsquo;s the difference between hoping your lock is unpickable and also having a deadbolt.
+    </p>
+
+    <div style="margin-top: 1.5rem;">
+      <button class="btn btn-sm btn-primary" onclick="closePanel()" style="width: 100%; justify-content: center;">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script>
+  // Nav active state
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('nav ul li a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.toggle('active',
+            link.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-40% 0px -60% 0px' });
+  document.querySelectorAll('.slide[id], .slide.slide-auto[id]').forEach(s => observer.observe(s));
+
+  // Side Panel
+  function openPanel() {
+    document.getElementById('did-backdrop').classList.add('active');
+    document.getElementById('did-panel').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePanel() {
+    document.getElementById('did-backdrop').classList.remove('active');
+    document.getElementById('did-panel').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePanel();
+  });
+</script>
+
+</body>
+</html>
