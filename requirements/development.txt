@@ -112,7 +112,7 @@ celery==5.5.2
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
-certifi==2025.6.15
+certifi==2026.10.19
     # via
     #   -c requirements/base-constraint.txt
     #   httpcore
